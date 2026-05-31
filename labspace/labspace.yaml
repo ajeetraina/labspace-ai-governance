@@ -1,53 +1,26 @@
-# labspace/labspace.yaml — Docker AI Governance
-# Same labspace-infra schema as labspace-sbx (generated from labspace-starter).
-
-title: Docker AI Governance — Hands-on
-description: |
-  Hands-on workshop covering the three pillars of Docker AI Governance:
-  Sandbox Policies, MCP Tool Governance, and Audit & Visibility.
-  Single-terminal model: ttyd binds to your Mac shell, sbx and docker mcp
-  are ready to use on the right panel.
-
-author: Ajeet Singh Raina <ajeetraina@docker.com>
-duration: 60m
+metadata:
+  name: ai-governance
+  title: Docker AI Governance
+  description: |
+    Define once, enforce everywhere. A hands-on lab proving how Docker
+    AI Governance policies flow from the Admin Console to every developer's
+    sandbox, covering both network and filesystem enforcement.
 
 sections:
-  - id: 00-setup
-    title: Setup — Tell us about your org
+  - title: Setup
     contentPath: 00-setup.md
 
-  - id: 01-introduction
-    title: Introduction — The Three Pillars
+  - title: Why AI Governance
     contentPath: 01-introduction.md
 
-  - id: 02-horror-stories
-    title: Horror Stories — An Agent With No Boundaries
-    contentPath: 02-horror-stories.md
+  - title: The Policy Model
+    contentPath: 02-the-policy-model.md
 
-  - id: 03-sandbox-policies
-    title: Pillar 1 — Sandbox Policies (Local)
-    contentPath: 03-sandbox-policies.md
+  - title: Network Enforcement Demo
+    contentPath: 03-network-demo.md
 
-  - id: 04-blast-radius
-    title: Pillar 1 — Blast Radius Test
-    contentPath: 04-blast-radius.md
+  - title: Filesystem Enforcement Demo
+    contentPath: 04-filesystem-demo.md
 
-  - id: 05-org-governance
-    title: Org Governance Walkthrough
-    contentPath: 05-org-governance.md
-
-  - id: 06-mcp-tool-governance
-    title: Pillar 2 — MCP Tool Governance
-    contentPath: 06-mcp-tool-governance.md
-
-  - id: 07-audit-visibility
-    title: Pillar 3 — Audit & Visibility
-    contentPath: 07-audit-visibility.md
-
-  - id: 08-bosch-scenarios
-    title: Bosch Scenarios — Per-Vertical Mapping
-    contentPath: 08-bosch-scenarios.md
-
-  - id: 99-validation
-    title: Validation checklist (facilitators)
-    contentPath: 99-validation-checklist.md
+  - title: What's Next
+    contentPath: 05-whats-next.md
