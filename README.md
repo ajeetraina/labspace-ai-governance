@@ -1,19 +1,18 @@
-# Labspace for Docker AI Governance
+# Docker AI Governance Labspace
 
-An interactive hands-on lab covering the three pillars of **Docker AI Governance** — Sandbox Policies, MCP Tool Governance, and Audit & Visibility — built on the same `ttyd + Mac terminal` Labspace pattern as [`labspace-sbx`](https://github.com/ajeetraina/labspace-sbx).
+A hands-on lab that proves how Docker AI Governance policies flow from one Admin Console toggle to every developer's `sbx` sandbox, with empirical tests for both network and filesystem enforcement.
 
-The labspace UI runs in your browser at `http://localhost:3030`:
+**Define once. Enforce everywhere.**
 
-- **Left panel** → Lab instructions (this content)
-- **Right panel** → Your Mac terminal with `sbx` and `docker mcp` ready to use
+## What this lab proves
 
-## Prerequisites
+- Policies set in `app.docker.com/admin/orgs/<your-org>` flow automatically to any developer logged in with org credentials
+- Network rules are enforced by an in-proxy `403` at request time
+- Filesystem rules are enforced at sandbox creation time — denied mounts cause `sbx run` to fail before the agent ever runs
+- The default-deny posture catches anything not covered by an allow rule
+- Developers cannot override `ORIGIN: remote` policies locally
 
-- [Docker Desktop](https://www.docker.com/products/docker-desktop/) 4.45+
-- [ttyd](https://github.com/tsl0922/ttyd) — `brew install ttyd`
-- [sbx](https://github.com/docker/sbx-releases) — `brew install docker/tap/sbx`
-
-`start-labspace.sh` checks all three on launch and tells you what to install if anything is missing.
+By the end you have a defensible enforcement story you can walk a security team through.
 
 ## Quick start
 
@@ -23,69 +22,92 @@ cd labspace-ai-governance
 bash start-labspace.sh
 ```
 
-Open <http://localhost:3030>.
+Then visit [http://localhost:8080](http://localhost:8080) in your browser.
 
-When you're done:
+## Prerequisites
 
-```bash
-bash disable-run.sh   # or just Ctrl-C in the start-labspace.sh window
-```
+- **Docker Desktop** with `sbx` (Docker Sandboxes) available on `$PATH`
+- **Admin access** to a Docker Hub organization with AI Governance enabled
+- **A logged-in Docker CLI** (`docker login` with your org credentials)
 
-## What you'll learn
+If you don't have an organization yet, you can still walk through Sections 00-02 conceptually — the demo sections (03, 04) need org-level admin access to add policy rules.
 
-- **Why AI coding agents inherit your permissions** — and what that means for SSH keys, cloud credentials, internal repos, and any URL on the internet.
-- **Pillar 1 — Sandbox Policies.** Network and filesystem allow/deny rules with `sbx policy`. Local rules, org rules, precedence, and propagation via the auth flow.
-- **The Blast Radius Test.** Run the same attack patterns against an unconstrained agent vs an agent in a policy-bounded sandbox. Side-by-side, on your own machine.
-- **Pillar 2 — MCP Tool Governance.** Approved MCP catalogs, per-tool allowlists within an approved server, and what happens when an agent tries to call a denied tool.
-- **Pillar 3 — Audit & Visibility.** Structured events for every policy evaluation, SIEM-shape JSON, and how this lands with your CISO.
-- **Bosch-style mapping** for four enterprise verticals (Mobility, iBike, Manufacturing, R&D) — concrete network/filesystem/MCP policy fragments per unit.
+## Lab structure
 
-## Sections
+| # | Section | Time | What you do |
+| --- | --- | --- | --- |
+| 00 | Setup | 2 min | Pick your org and verify sbx is installed |
+| 01 | Why AI Governance | 3 min | Horror stories, three pillars framing |
+| 02 | The Policy Model | 5 min | Conceptual: how org → developer policy flow works |
+| 03 | Network Enforcement Demo | 10 min | Three `curl` commands, three outcomes (allow / deny / default-deny) |
+| 04 | Filesystem Enforcement Demo | 10 min | Three `sbx run` attempts, same three outcomes |
+| 05 | What's Next | 5 min | Preview of audit trails and MCP Tool Governance |
 
-| # | Section | Pillar |
-|---|---------|--------|
-| 00 | Setup — enter your Docker org | — |
-| 01 | Introduction — the three pillars | — |
-| 02 | Horror Stories — agent with no boundaries | — |
-| 03 | Sandbox Policies (local) | 1 |
-| 04 | Blast Radius Test | 1 |
-| 05 | Org Governance walkthrough | 1 |
-| 06 | MCP Tool Governance | 2 |
-| 07 | Audit & Visibility | 3 |
-| 08 | Bosch scenarios — per-vertical mapping | All |
-| 99 | Validation checklist (facilitators only) | — |
+Total walkthrough: ~35 minutes.
 
-## Personalising — your Docker org
+## The three pillars
 
-Section 00 asks for your Docker org name (default `acme-corp`). The labspace stores it in `project/setup/.env` and substitutes it through Sections 05, 07, and 08 — so policy examples reference *your* internal domains instead of generic placeholders.
+Docker AI Governance gives you three layers of control:
 
-For the Bosch BU-level session: type `bosch` at the prompt and the labs read naturally to that audience.
+1. **Sandbox Policies** — Network and filesystem rules enforced at the proxy and mount layer. *Validated in Sections 03 and 04.*
+2. **MCP Tool Governance** — Which MCP servers and tools agents can call. *Previewed in Section 05.*
+3. **Audit + Visibility** — Every policy decision generates a structured event for your SIEM. *Previewed in Section 05.*
 
-## Repo layout
+This lab focuses on Pillar 1 because that's what you can empirically prove enforces in 20 minutes. Pillars 2 and 3 are framed honestly as roadmap/preview content.
+
+## What was empirically validated
+
+Every command in Sections 03 and 04 was tested end-to-end on the `dockerdevrel` org. Key findings baked into the lab:
+
+- **Network rules:** in-proxy interception, returns HTTP 403 to denied destinations. `allow AI services` + `allow Docker services` + `deny exfiltration` is the minimum viable demo configuration.
+- **`allow all IPs` (`0.0.0.0/0`) is a trap.** It defeats every deny rule. Section 03 explicitly removes it.
+- **Filesystem rules:** mount-time enforcement, not runtime. `sbx run` checks every mount path against policy before starting the sandbox; denied paths cause sandbox creation to fail with `403 mount policy denied`.
+- **macOS path canonicalisation:** `/tmp` resolves to `/private/tmp` in policy evaluation. Important if you write rules targeting `/tmp/...`.
+- **Sandbox name collisions:** sbx auto-names sandboxes by `<agent>-<workdir>`. Re-running from the same workdir fails. The lab uses three distinct workdirs in Section 04 to avoid this.
+
+The audit subcommand (`sbx audit`) is not yet available on the sbx CLI. Section 05 points to the local daemon log as the inspection surface today and marks the structured audit CLI as roadmap.
+
+## Pairing with the slide deck
+
+This lab is the hands-on companion to the **Docker AI Governance** deck. Suggested run-of-show for a customer briefing:
+
+1. Walk the deck through slide 13 ("How this makes you safer") — 10 minutes
+2. Switch to the lab and run Section 03 live — 10 minutes
+3. Run Section 04 live — 10 minutes
+4. Return to the deck for closing — 5 minutes
+5. Hand the lab URL to attendees so they can replay on their own org
+
+Total briefing: ~35 minutes plus Q&A.
+
+## Architecture
+
+Built on the `labspace-sbx` template. The labspace itself runs in a Docker Compose stack:
+
+- **Left panel** — labspace UI renders the markdown sections with variable substitution (`$$org$$`) and click-to-run code blocks
+- **Right panel** — `ttyd` exposes your host zsh on port 8085, so click-to-run commands execute on your real machine where `sbx` is installed and your Docker credentials live
+
+Click-to-run code blocks use `terminal-id=main` to target the right-panel terminal.
+
+## File layout
 
 ```
 labspace-ai-governance/
+├── README.md                    # this file
 ├── labspace/
-│   ├── labspace.yaml          # Section ordering and metadata
-│   ├── content/               # Lab markdown (00–08, 99)
-│   └── assets/screenshots/    # Admin Console screenshots
-├── project/                   # Supporting files and helper scripts
-│   ├── horror-story-agent/    # inventory.sh — what an agent could touch
-│   ├── policies/              # Sample sbx policy templates
-│   ├── mcp-governance/        # MCP Toolkit reference
-│   ├── audit/                 # view-events.sh + sample-events.jsonl
-│   └── setup/                 # setup-org.sh, render-org.sh
-├── start-labspace.sh          # ttyd + compose launcher (host-side)
-├── disable-run.sh             # Stop everything
-├── blast-radius.sh            # Guided Blast Radius scenario runner
+│   ├── labspace.yaml            # section registry
+│   ├── 00-setup.md              # org variable + presets
+│   ├── 01-introduction.md       # why + three pillars
+│   ├── 02-the-policy-model.md   # conceptual
+│   ├── 03-network-demo.md       # validated
+│   ├── 04-filesystem-demo.md    # validated
+│   └── 05-whats-next.md         # roadmap / preview
+├── start-labspace.sh            # bring up the Compose stack
 ├── compose.yaml
-└── compose.override.yaml
+├── compose.override.yaml
+└── kits/                        # ancillary content kits (optional)
 ```
 
-## Validation before running with a customer
+## Feedback
 
-Read `labspace/content/99-validation-checklist.md` before facilitating with Bosch or any external audience. The content was authored against public Docker docs and may need to be re-checked against your installed `sbx` version — especially the audit CLI (`sbx audit ls / export`) which is the part I'm least sure about.
+Issues, corrections, or enhancements welcome at the repo. The validation note in Section 04 calls out areas where the sbx behaviour may evolve — PRs that update the lab against a newer sbx version are particularly helpful.
 
-## License
-
-Apache-2.0 (matches the parent template).
