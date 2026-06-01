@@ -22,7 +22,7 @@ cd labspace-ai-governance
 bash start-labspace.sh
 ```
 
-Then visit [http://localhost:8080](http://localhost:8080) in your browser.
+Then visit [http://localhost3030](http://localhost:3030) in your browser.
 
 ## Prerequisites
 
