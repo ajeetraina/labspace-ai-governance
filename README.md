@@ -67,17 +67,6 @@ Every command in Sections 03 and 04 was tested end-to-end on the `dockerdevrel` 
 
 The audit subcommand (`sbx audit`) is not yet available on the sbx CLI. Section 05 points to the local daemon log as the inspection surface today and marks the structured audit CLI as roadmap.
 
-## Pairing with the slide deck
-
-This lab is the hands-on companion to the **Docker AI Governance** deck. Suggested run-of-show for a customer briefing:
-
-1. Walk the deck through slide 13 ("How this makes you safer") — 10 minutes
-2. Switch to the lab and run Section 03 live — 10 minutes
-3. Run Section 04 live — 10 minutes
-4. Return to the deck for closing — 5 minutes
-5. Hand the lab URL to attendees so they can replay on their own org
-
-Total briefing: ~35 minutes plus Q&A.
 
 ## Architecture
 
