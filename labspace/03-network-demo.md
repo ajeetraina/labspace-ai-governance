@@ -142,13 +142,46 @@ The distinction between 200/404 (origin server replied) and 403 (proxy refused) 
 
 ## Step 9 — See the proxy refusal up close (optional)
 
-For a more visceral demo, run a verbose `curl`:
+For a more visceral demo, run a verbose `curl` from inside the sandbox:
 
 ```bash terminal-id=main
-curl -v https://paste.ee 2>&1 | head -20
+curl -v https://paste.ee 2>&1 | head -50
 ```
 
-You'll see the proxy's `HTTP/1.1 403 Forbidden` response *before* any TLS handshake with paste.ee. The request never left your local network.
+You'll see the sbx proxy intercept the request in three distinct phases:
+
+**1. The proxy variable** — the sandbox routes outbound traffic through `gateway.docker.internal:3128`:
+
+```
+* Uses proxy env variable https_proxy == 'http://gateway.docker.internal:3128'
+```
+
+**2. The CONNECT tunnel succeeds** — counter‑intuitively, the proxy returns `HTTP/1.0 200 OK` to the `CONNECT` request. It accepts the tunnel so it can do content inspection:
+
+```
+> CONNECT paste.ee:443 HTTP/1.1
+< HTTP/1.0 200 OK
+* CONNECT tunnel established, response 200
+```
+
+**3. The MITM cert is the smoking gun** — the TLS handshake completes, but the server certificate is *not* from Let's Encrypt or paste.ee's real issuer. It's an impersonation cert minted by the sbx proxy:
+
+```
+* Server certificate:
+*   subject: O=GoProxy untrusted MITM proxy Inc; CN=paste.ee
+```
+
+That `O=GoProxy untrusted MITM proxy Inc` is the proxy openly identifying itself. paste.ee never received the connection — the proxy terminated the TLS itself, inspected the request inside the tunnel, matched the `deny exfiltration` rule, and returned `HTTP/1.1 403 Forbidden`.
+
+To see the 403 itself, lengthen the head:
+
+```bash terminal-id=main
+curl -v https://paste.ee 2>&1 | head -80 | tail -30
+```
+
+You'll see `< HTTP/1.1 403 Forbidden` after the TLS handshake — proof that the policy was enforced inside the MITM tunnel, before the request was forwarded anywhere.
+
+For contrast, from your **host machine** (outside the sandbox), the same `curl -v https://paste.ee` shows a normal Let's Encrypt cert and reaches the real paste.ee. Policy enforcement is sandbox‑scoped — that's by design.
 
 ## Step 10 — Exit the sandbox
 
