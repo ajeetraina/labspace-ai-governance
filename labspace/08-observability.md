@@ -1,11 +1,15 @@
 # Observability — Audit + Dashboard
 
-Section 05 promised Pillar 3 (Audit + Visibility) was rolling out. The good news: the foundation is already shipping. Every policy decision sbx makes is written to a structured JSONL log on disk today.
+Section 05 promised Pillar 3 (Audit + Visibility) was rolling out. The good news: the foundation is already shipping. Every policy decision sbx makes is written to a structured JSONL log on disk today — and `start-labspace.sh` already brought up a live dashboard for you alongside this lab.
+
+<iframe src="http://localhost:8090" width="100%" height="600" style="border:1px solid #cbd5e1; border-radius:8px; background:#f8fafc;" loading="lazy"></iframe>
+
+If you don't see the dashboard above, open it in a new tab: **[http://localhost:8090](http://localhost:8090)**. Trigger a few events with the commands below and it will populate live.
 
 This section gives you two things:
 
-1. A way to read that audit log directly with `jq`
-2. A small local dashboard (provided as a kit) that streams sbx + MCP events to a web UI
+1. A way to read the underlying audit log directly with `jq`
+2. The dashboard you see above — built from `labspace/kits/observability/` and started automatically by `start-labspace.sh`
 
 **Time:** ~10 minutes
 **Prerequisites:** You completed Sections 03 and (optionally) 06.
@@ -57,16 +61,16 @@ This is your SIEM-ready surface. Forward this file to Splunk/Datadog/Sentinel an
 
 The audit log answers *what was decided and why*. It doesn't yet answer *who triggered it on this machine* — that's roadmap.
 
-## Step 3 — Run the observability dashboard
+## Step 3 — Dashboard (already running)
 
-The lab ships a small kit at `labspace/kits/observability/` that wraps both data sources (sbx daemon log + local `docker/mcp-gateway` logs) into a single live web UI.
+`start-labspace.sh` already brought up the dashboard alongside the labspace UI — it's the embedded panel at the top of this section. If you'd rather run it standalone (e.g., from a different machine, or without the labspace UI), the kit at `labspace/kits/observability/` ships an identical compose file:
 
 ```bash terminal-id=main
 cd ~/work/labspace-ai-governance/labspace/kits/observability
-docker compose up -d --build
+docker compose --profile with-gateway up -d --build
 ```
 
-Wait for the build to finish, then open the dashboard:
+Then open it in a fresh browser tab:
 
 ```bash terminal-id=main
 open http://localhost:8090

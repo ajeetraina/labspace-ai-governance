@@ -17,3 +17,28 @@ services:
     pull_policy: always
     environment:
       WORKSPACE_TYPE: ttyd
+
+  # Live sbx + MCP observability dashboard. Brought up alongside the labspace
+  # UI so the user gets both with a single `bash start-labspace.sh`. The
+  # Observability section of the lab embeds this on http://localhost:8090
+  # via an iframe.
+  observability:
+    build:
+      context: ./labspace/kits/observability
+    image: labspace-observability:latest
+    # Run as root so the container can read the bind-mounted /var/run/docker.sock.
+    # The default distroless 'nonroot' user (uid 65532) doesn't match the host
+    # docker group's GID and gets EACCES. Read-only mount + no other privileges
+    # keeps the blast radius small.
+    user: "0"
+    ports:
+      - "8090:8090"
+    environment:
+      SBX_DAEMON_LOG: /var/log/sbx/sandboxes/sandboxd/daemon.log
+      LISTEN_ADDR: ":8090"
+    volumes:
+      # macOS sbx daemon log path. On Linux this is typically
+      # ~/.local/share/com.docker.sandboxes/ — adjust if running on Linux.
+      - "${HOME}/Library/Application Support/com.docker.sandboxes:/var/log/sbx:ro"
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+    restart: unless-stopped

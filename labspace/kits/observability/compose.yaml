@@ -3,6 +3,10 @@ services:
     build:
       context: .
     image: labspace-observability:latest
+    # Run as root for read access to the bind-mounted /var/run/docker.sock.
+    # See compose.override.yaml at the repo root for the same setting and
+    # the rationale.
+    user: "0"
     ports:
       - "8090:8090"
     environment:

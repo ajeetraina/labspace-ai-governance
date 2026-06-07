@@ -122,6 +122,8 @@ COMPOSE_PID=$!
 echo ""
 echo "==========================================="
 echo "  Labspace ready at http://localhost:3030"
+echo "  Observability dashboard: http://localhost:8090"
+echo "    (also embedded in Section 08)"
 echo "  Term 1 / Term 2  →  your Mac terminal"
 echo "  Run: sbx ls, sbx version, sbx run ..."
 echo "==========================================="
