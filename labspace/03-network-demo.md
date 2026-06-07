@@ -183,4 +183,7 @@ A few minutes typically. To force a refresh: `sbx policy reset`.
 **"Can the developer override a deny rule locally?"**
 No. Local rules are only honored for rule types the org policy does not own. Once the org defines network rules, local network rules go inactive.
 
+**"I skipped Step 2 (allow rules) and `api.anthropic.com` still returned 200/404 — why?"**
+sbx may retain baseline access to a small set of well-known AI provider destinations even when corporate network policy is active and the `default-ai-services` local rule shows `inactive — corporate policy takes precedence`. Whether this is intentional ("preserve sensible defaults") or an artifact of how the proxy initialises is currently undocumented. The takeaway: **always do Step 2**. Explicit allow rules give you something concrete to point at when a security team asks "why did this work?" — instead of relying on undocumented baseline behaviour.
+
 Move on to Section 04 to prove the filesystem half of the same model.
