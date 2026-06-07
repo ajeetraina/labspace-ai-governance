@@ -4,13 +4,11 @@ Welcome to the Docker AI Governance lab.
 
 Before you start, set the **organization** you'll be using throughout. Most commands and links in later sections substitute `$$org$$` for whatever you set here.
 
-::variableDefinition[org]{prompt="Which Docker Hub organization will you use?"}
+::variableDefinition[org]{prompt="Which Docker Hub organization will you use?" default="whalecollab"}
 
-If you're not sure, try one of these presets:
+Click below to apply the default for this lab, or type your own org name into the field above.
 
-::variableSetButton[Docker DevRel]{variables="org=dockerdevrel"}
-::variableSetButton[Bosch (demo)]{variables="org=bosch"}
-::variableSetButton[Acme (sample)]{variables="org=acme"}
+::variableSetButton[Use whalecollab]{variables="org=whalecollab"}
 
 You can change this any time.
 

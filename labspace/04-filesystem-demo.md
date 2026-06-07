@@ -16,7 +16,7 @@ Network was the first half of Pillar 1. Filesystem is the other half — and arg
 
 ## Step 1 — Open the Admin Console
 
-Open **[app.docker.com/admin/orgs/$$org$$](https://app.docker.com/admin/orgs/$$org$$)** and navigate to **AI governance** → **Filesystem access**.
+Open **[app.docker.com/accounts/$$org$$](https://app.docker.com/accounts/$$org$$)** and navigate to **AI governance** → **Filesystem access**.
 
 The page works the same way as Network access, but rules are scoped to paths (with glob support) and actions (Read / Write).
 

@@ -22,5 +22,8 @@ sections:
   - title: Filesystem Enforcement Demo
     contentPath: 04-filesystem-demo.md
 
+  - title: MCP Hands-On
+    contentPath: 06-mcp-hands-on.md
+
   - title: What's Next
     contentPath: 05-whats-next.md

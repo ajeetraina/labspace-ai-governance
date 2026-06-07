@@ -9,14 +9,14 @@ This section proves the network half of Pillar 1. Section 04 proves the filesyst
 
 ## What you'll prove
 
-- Policies defined in `app.docker.com/admin/orgs/$$org$$` flow automatically to any developer logged in with org credentials
+- Policies defined in `app.docker.com/accounts/$$org$$` flow automatically to any developer logged in with org credentials
 - An **allow** rule lets explicitly-permitted traffic through
 - A **deny** rule blocks specific destinations
 - The **default-deny posture** blocks anything not covered by an allow rule
 
 ## Step 1 — Open the Admin Console
 
-Open **[app.docker.com/admin/orgs/$$org$$](https://app.docker.com/admin/orgs/$$org$$)** and navigate to **AI governance** → **Network access**.
+Open **[app.docker.com/accounts/$$org$$](https://app.docker.com/accounts/$$org$$)** and navigate to **AI governance** → **Network access**.
 
 Confirm the AI governance toggle is **ON**. If it isn't, turn it on.
 

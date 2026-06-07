@@ -6,7 +6,7 @@ Before you run the live demo, here's the mental model.
 
 Policies for `$$org$$` are defined in one place:
 
-**[app.docker.com/admin/orgs/$$org$$](https://app.docker.com/admin/orgs/$$org$$)** → AI governance
+**[app.docker.com/accounts/$$org$$](https://app.docker.com/accounts/$$org$$)** → AI governance
 
 Only org admins can modify policies. Developers cannot override them locally. That's the point.
 
