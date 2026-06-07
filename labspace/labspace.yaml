@@ -25,5 +25,8 @@ sections:
   - title: MCP Hands-On
     contentPath: 06-mcp-hands-on.md
 
+  - title: Observability
+    contentPath: 08-observability.md
+
   - title: What's Next
     contentPath: 05-whats-next.md
