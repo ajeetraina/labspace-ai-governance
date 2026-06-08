@@ -48,18 +48,21 @@ jq -r 'select(.msg == "governance policy evaluation" and .allowed == false) | .p
 
 This is your SIEM-ready surface. Forward this file to Splunk/Datadog/Sentinel and you have an org-grade audit trail for sandbox policy decisions.
 
-## What's captured and what isn't
+## What's captured and what isn't (reconciled with Docker's marketing)
 
-| Captured today | Not captured today |
+Docker's [AI Governance page](https://www.docker.com/products/ai-governance/) describes audit events as containing "user identity, timestamp, session context, and triggering rule." Here's what v0.31.3 actually emits today, mapped against that claim:
+
+| Marketing claim | v0.31.3 reality |
 |---|---|
-| Timestamp | User identity |
-| Resource (domain, port, path) | Sandbox name (sandbox_id) |
-| Decision (allow/deny) | Prompt or tool-call payload |
-| Matched rule name | MCP tool-call audit (separate roadmap) |
-| Deny reason (explicit / implicit) | Cross-machine aggregation |
-| Policy source (local / remote) | |
+| Timestamp | ✅ on every event |
+| Triggering rule | ✅ `policy_matched_rule` |
+| Session context | ⚠️ Partial — `session`, `sandbox`, `agent`, `runtime` fields appear on lifecycle events (gateway start, sandbox spawn) but **not** on `governance policy evaluation` events |
+| User identity | ❌ Not in any field today. The dashboard synthesises it from `$USER` on the host as a best-effort proxy. |
+| SIEM export | ✅ JSONL is already the format |
 
-The audit log answers *what was decided and why*. It doesn't yet answer *who triggered it on this machine* — that's roadmap.
+Plus a third log file — **`mcp/mcp.log`** alongside `daemon.log` — that captures MCP gateway lifecycle events in logfmt (`setupMCPGateway called`, `gateway started in sandboxd`, etc.). The dashboard tails it as a separate source.
+
+The audit log answers *what was decided and why*, with sandbox attribution on some events. It does not yet answer *who triggered it* across multiple users on one machine — Docker's marketing implies this is coming, likely in v0.32+.
 
 ## Step 3 — Dashboard (already running)
 

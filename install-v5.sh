@@ -82,7 +82,7 @@ mkdir -p "${REPO_ROOT}/labspace"
 cp -R "${SCRIPT_DIR}/labspace/." "${REPO_ROOT}/labspace/"
 
 # 3. Root-level files: compose stack + start script
-ROOT_FILES=(compose.yaml compose.override.yaml start-labspace.sh)
+ROOT_FILES=(compose.yaml compose.override.yaml start-labspace.sh stop-labspace.sh)
 NEEDS_ROOT_INSTALL=0
 for f in "${ROOT_FILES[@]}"; do
   if [ ! -f "${REPO_ROOT}/${f}" ] && [ -f "${SCRIPT_DIR}/${f}" ]; then
@@ -100,6 +100,7 @@ if [ "$NEEDS_ROOT_INSTALL" = "1" ]; then
       fi
     done
     [ -f "${REPO_ROOT}/start-labspace.sh" ] && chmod +x "${REPO_ROOT}/start-labspace.sh"
+    [ -f "${REPO_ROOT}/stop-labspace.sh" ] && chmod +x "${REPO_ROOT}/stop-labspace.sh"
   fi
 fi
 
@@ -121,9 +122,10 @@ echo "  - Admin URL pattern corrected to app.docker.com/accounts/<org>"
 echo
 echo "Next steps:"
 echo "  1. Review:                ls labspace/"
-echo "  2. Test the labspace UI:  bash start-labspace.sh   # then visit http://localhost:3030"
-echo "  3. Try the dashboard:     cd labspace/kits/observability && docker compose up -d --build"
-echo "  4. Commit:                git add -A && git commit -m 'Install labspace v5'"
+echo "  2. Start the labspace:    bash start-labspace.sh   # then visit http://localhost:3030"
+echo "  3. Stop everything:       bash stop-labspace.sh    # later, when done"
+echo "  4. Standalone dashboard:  cd labspace/kits/observability && docker compose up -d --build"
+echo "  5. Commit:                git add -A && git commit -m 'Install labspace v5'"
 echo
 [ -d "${REPO_ROOT}/${BACKUP_DIR}" ] && \
   echo "To revert:   rm -rf labspace && mv ${BACKUP_DIR} labspace"

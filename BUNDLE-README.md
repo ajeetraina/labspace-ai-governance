@@ -9,6 +9,7 @@ Self-contained tarball of the Docker AI Governance labspace. Extract anywhere an
 | `install-v5.sh` | Idempotent installer. Backs up any existing `labspace/`, drops in v5 content, optionally adds root compose files. |
 | `compose.yaml` + `compose.override.yaml` | Labspace UI stack (markdown renderer on `:3030` + ttyd terminal on `:8085`). |
 | `start-labspace.sh` | Brings the stack up. |
+| `stop-labspace.sh` | Brings the stack down. Idempotent. `--volumes` / `--images` / `--all` for deeper cleanup. |
 | `labspace/00-setup.md` | Pick your Docker org. Default: `whalecollab`. |
 | `labspace/01-introduction.md` | Why AI Governance — three pillars framing. |
 | `labspace/02-the-policy-model.md` | How org policies reach developers; local vs remote. |
@@ -27,6 +28,8 @@ tar -xzf labspace-ai-governance-v5.tar.gz
 cd labspace-ai-governance-v5
 bash install-v5.sh                # into the current directory
 bash start-labspace.sh            # then visit http://localhost:3030
+# when you're done:
+bash stop-labspace.sh             # or `bash stop-labspace.sh --all` for full cleanup
 ```
 
 To run the observability dashboard:
