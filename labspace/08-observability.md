@@ -50,9 +50,9 @@ This is your SIEM-ready surface. Forward this file to Splunk/Datadog/Sentinel an
 
 ## What's captured and what isn't (reconciled with Docker's marketing)
 
-Docker's [AI Governance page](https://www.docker.com/products/ai-governance/) describes audit events as containing "user identity, timestamp, session context, and triggering rule." Here's what v0.31.3 actually emits today, mapped against that claim:
+Docker's [AI Governance page](https://www.docker.com/products/ai-governance/) describes audit events as containing "user identity, timestamp, session context, and triggering rule." Here's what v0.32.0 actually emits today, mapped against that claim:
 
-| Marketing claim | v0.31.3 reality |
+| Marketing claim | v0.32.0 reality |
 |---|---|
 | Timestamp | ✅ on every event |
 | Triggering rule | ✅ `policy_matched_rule` |

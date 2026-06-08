@@ -37,7 +37,7 @@ services:
       SBX_DAEMON_LOG: /var/log/sbx/sandboxes/sandboxd/daemon.log
       SBX_MCP_LOG: /var/log/sbx/sandboxes/sandboxd/mcp/mcp.log
       LISTEN_ADDR: ":8090"
-      # Synthesised user identity stamped on every event. sbx v0.31.3
+      # Synthesised user identity stamped on every event. sbx v0.32.0
       # doesn't emit user identity natively in audit events; we use the
       # host user as a best-effort proxy. Override by setting LABSPACE_USER
       # in your shell before running start-labspace.sh.
