@@ -57,7 +57,7 @@ This lab focuses on Pillar 1 because that's what you can empirically prove enfor
 
 ## What was empirically validated
 
-Every command in Sections 03 and 04 was tested end-to-end on the `dockerdevrel` org. Key findings baked into the lab:
+Every command in Sections 03 and 04 was tested end-to-end on the `whalecollab` org. Key findings baked into the lab:
 
 - **Network rules:** in-proxy interception, returns HTTP 403 to denied destinations. `allow AI services` + `allow Docker services` + `deny exfiltration` is the minimum viable demo configuration.
 - **`allow all IPs` (`0.0.0.0/0`) is a trap.** It defeats every deny rule. Section 03 explicitly removes it.
