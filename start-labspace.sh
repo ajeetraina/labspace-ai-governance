@@ -55,17 +55,11 @@ if ! command -v sbx &>/dev/null; then
   exit 1
 fi
 
-# ── 3. Ensure sbx daemon is running ────────────────────────────
-SBX_SERVER=$(sbx version 2>/dev/null | grep "Server Version:" | awk '{print $3}')
-if [ -z "$SBX_SERVER" ] || [ "$SBX_SERVER" = "Unavailable" ]; then
-  info "sbx daemon not running — starting it..."
-  sbx start
-  sleep 2
+# ── 3. Ensure sbx is responsive ────────────────────────────────
+if ! sbx ls &>/dev/null; then
+  error "sbx is installed but not responding. Make sure Docker is running, then try 'sbx ls'."
 fi
-
-SBX_CLIENT=$(sbx version 2>/dev/null | grep "Client Version:" | awk '{print $3}')
-SBX_SERVER=$(sbx version 2>/dev/null | grep "Server Version:" | awk '{print $3}')
-info "sbx client: $SBX_CLIENT  |  server: $SBX_SERVER"
+info "sbx ready: $(sbx version 2>/dev/null)"
 
 # ── 4. Set CONTENT_PATH (fixes 'empty section between colons') ──
 export CONTENT_PATH="${CONTENT_PATH:-$(pwd)}"

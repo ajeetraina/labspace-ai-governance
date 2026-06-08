@@ -11,6 +11,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"regexp"
 	"strings"
 	"sync"
 	"time"
@@ -24,16 +25,23 @@ import (
 //go:embed static
 var staticFS embed.FS
 
+// Event is the normalised shape we send to the frontend.
+// MCPServer is set when Resource looks like a known MCP server endpoint
+// (mcp.notion.com, mcp.linear.app, registry.modelcontextprotocol.io, …).
 type Event struct {
-	Source   string                 `json:"source"`
-	Time     string                 `json:"time"`
-	Kind     string                 `json:"kind"`
-	Decision string                 `json:"decision,omitempty"`
-	Resource string                 `json:"resource,omitempty"`
-	Rule     string                 `json:"rule,omitempty"`
-	Reason   string                 `json:"reason,omitempty"`
-	Origin   string                 `json:"origin,omitempty"`
-	Raw      map[string]interface{} `json:"raw"`
+	Source    string                 `json:"source"`
+	Time      string                 `json:"time"`
+	Kind      string                 `json:"kind"`
+	Decision  string                 `json:"decision,omitempty"`
+	Resource  string                 `json:"resource,omitempty"`
+	Rule      string                 `json:"rule,omitempty"`
+	Reason    string                 `json:"reason,omitempty"`
+	Origin    string                 `json:"origin,omitempty"`
+	User      string                 `json:"user,omitempty"`
+	Sandbox   string                 `json:"sandbox,omitempty"`
+	Agent     string                 `json:"agent,omitempty"`
+	MCPServer bool                   `json:"mcp_server,omitempty"`
+	Raw       map[string]interface{} `json:"raw"`
 }
 
 type hub struct {
@@ -44,10 +52,7 @@ type hub struct {
 }
 
 func newHub() *hub {
-	return &hub{
-		clients: make(map[*websocket.Conn]bool),
-		maxHist: 1000,
-	}
+	return &hub{clients: make(map[*websocket.Conn]bool), maxHist: 1000}
 }
 
 func (h *hub) add(client *websocket.Conn) {
@@ -92,6 +97,32 @@ func (h *hub) snapshot() []Event {
 var upgrader = websocket.Upgrader{
 	CheckOrigin: func(r *http.Request) bool { return true },
 }
+
+// Synthesised user identity. v0.32.0 does not emit this natively in the
+// daemon log, so we stamp every event with whoever started the dashboard.
+var labspaceUser string
+
+// MCP server destinations we know about. Resources matching any of these
+// patterns get MCPServer=true so the frontend can group them.
+var mcpServerPatterns = []*regexp.Regexp{
+	regexp.MustCompile(`(?i)\bmcp\.[a-z0-9.-]+`),
+	regexp.MustCompile(`(?i)registry\.modelcontextprotocol\.io`),
+	regexp.MustCompile(`(?i)\bmcp-[a-z0-9.-]+`),
+}
+
+func isMCPDestination(s string) bool {
+	if s == "" {
+		return false
+	}
+	for _, re := range mcpServerPatterns {
+		if re.MatchString(s) {
+			return true
+		}
+	}
+	return false
+}
+
+// ---------- sbx daemon.log ----------
 
 func tailSbxLog(ctx context.Context, path string, h *hub) {
 	t, err := tail.TailFile(path, tail.Config{
@@ -140,19 +171,122 @@ func parseAndBroadcastSbx(line string, h *hub) {
 	origin, _ := raw["policy_source"].(string)
 	resource, _ := raw["resource_value"].(string)
 	t, _ := raw["time"].(string)
+	sandbox, _ := raw["sandbox"].(string)
+	if sandbox == "" {
+		// some events use 'session' as the sandbox name
+		sandbox, _ = raw["session"].(string)
+	}
+	agent, _ := raw["agent"].(string)
+
 	e := Event{
-		Source:   "sbx",
+		Source:    "sbx",
+		Time:      t,
+		Kind:      "policy",
+		Decision:  decision,
+		Resource:  resource,
+		Rule:      rule,
+		Reason:    reason,
+		Origin:    origin,
+		User:      labspaceUser,
+		Sandbox:   sandbox,
+		Agent:     agent,
+		MCPServer: isMCPDestination(resource),
+		Raw:       raw,
+	}
+	h.broadcast(e)
+}
+
+// ---------- sbx mcp.log (logfmt, not JSON) ----------
+
+var logfmtKV = regexp.MustCompile(`(\w+)=(?:"([^"]*)"|(\[[^\]]*\])|(\S+))`)
+
+func tailMcpLog(ctx context.Context, path string, h *hub) {
+	t, err := tail.TailFile(path, tail.Config{
+		Follow:    true,
+		ReOpen:    true,
+		MustExist: false,
+		Logger:    tail.DiscardingLogger,
+	})
+	if err != nil {
+		log.Printf("mcp.log tail: %v", err)
+		return
+	}
+	defer t.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case line, ok := <-t.Lines:
+			if !ok {
+				return
+			}
+			parseMcpLog(line.Text, h)
+		}
+	}
+}
+
+func parseMcpLog(line string, h *hub) {
+	if line == "" {
+		return
+	}
+	fields := map[string]string{}
+	for _, m := range logfmtKV.FindAllStringSubmatch(line, -1) {
+		k := m[1]
+		v := m[2]
+		if v == "" {
+			v = m[3]
+		}
+		if v == "" {
+			v = m[4]
+		}
+		fields[k] = v
+	}
+	msg := fields["msg"]
+	if msg == "" {
+		return
+	}
+	t := fields["time"]
+	if t == "" {
+		t = time.Now().UTC().Format(time.RFC3339Nano)
+	}
+	level := strings.ToLower(fields["level"])
+	decision := "info"
+	if level == "error" {
+		decision = "deny"
+	}
+	sandbox := fields["name"]
+	if sandbox == "" {
+		sandbox = fields["session"]
+	}
+	raw := map[string]interface{}{}
+	for k, v := range fields {
+		raw[k] = v
+	}
+	e := Event{
+		Source:   "mcp-lifecycle",
 		Time:     t,
-		Kind:     "policy",
+		Kind:     "mcp-lifecycle",
 		Decision: decision,
-		Resource: resource,
-		Rule:     rule,
-		Reason:   reason,
-		Origin:   origin,
+		Resource: firstNonEmpty(fields["url"], fields["servers"], fields["inline_servers"], fields["workspace"]),
+		Rule:     msg,
+		Reason:   firstNonEmpty(fields["err"], fields["error"]),
+		User:     labspaceUser,
+		Sandbox:  sandbox,
 		Raw:      raw,
 	}
 	h.broadcast(e)
 }
+
+func firstNonEmpty(vs ...string) string {
+	for _, v := range vs {
+		if v != "" {
+			return v
+		}
+	}
+	return ""
+}
+
+// ---------- docker/mcp-gateway container logs ----------
 
 func tailMcpGateway(ctx context.Context, h *hub) {
 	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
@@ -234,7 +368,8 @@ func streamContainerLogs(ctx context.Context, cli *client.Client, id string, h *
 			}
 		}
 		decision := "info"
-		if strings.Contains(strings.ToLower(body), "denied") || strings.Contains(strings.ToLower(body), "forbidden") {
+		lower := strings.ToLower(body)
+		if strings.Contains(lower, "denied") || strings.Contains(lower, "forbidden") || strings.Contains(lower, "error") {
 			decision = "deny"
 		}
 		e := Event{
@@ -244,6 +379,7 @@ func streamContainerLogs(ctx context.Context, cli *client.Client, id string, h *
 			Decision: decision,
 			Resource: extractMcpResource(body),
 			Rule:     extractMcpRule(body),
+			User:     labspaceUser,
 			Raw:      map[string]interface{}{"line": body, "container": id[:12]},
 		}
 		h.broadcast(e)
@@ -252,9 +388,7 @@ func streamContainerLogs(ctx context.Context, cli *client.Client, id string, h *
 
 // Docker engine multiplexes stdout/stderr with an 8-byte header per chunk.
 // Strip it so log lines parse cleanly.
-type dockerLogReader struct {
-	r io.Reader
-}
+type dockerLogReader struct{ r io.Reader }
 
 func (d *dockerLogReader) Read(p []byte) (int, error) {
 	hdr := make([]byte, 8)
@@ -271,51 +405,70 @@ func (d *dockerLogReader) Read(p []byte) (int, error) {
 	return io.ReadFull(d.r, p[:size])
 }
 
-func stripDockerLogHeader(r io.Reader) io.Reader {
-	return &dockerLogReader{r: r}
-}
+func stripDockerLogHeader(r io.Reader) io.Reader { return &dockerLogReader{r: r} }
+
+// Heuristics for extracting tool / resource info from gateway --verbose=true
+// stdout. Best-effort — not a structured audit.
+var (
+	reToolName  = regexp.MustCompile(`(?i)tool[ =:]+"?([a-z0-9_./-]+)"?`)
+	reServerArg = regexp.MustCompile(`(?i)server[ =:]+"?([a-z0-9_./-]+)"?`)
+)
 
 func extractMcpResource(line string) string {
-	for _, key := range []string{"server=", "tool=", "request="} {
-		if i := strings.Index(line, key); i >= 0 {
-			rest := line[i+len(key):]
-			if j := strings.IndexAny(rest, " \t"); j >= 0 {
-				return key + rest[:j]
-			}
-			return key + rest
-		}
+	if m := reServerArg.FindStringSubmatch(line); len(m) > 1 {
+		return "server=" + m[1]
+	}
+	if m := reToolName.FindStringSubmatch(line); len(m) > 1 {
+		return "tool=" + m[1]
 	}
 	return ""
 }
 
 func extractMcpRule(line string) string {
-	if strings.Contains(line, "ListToolsRequest") {
-		return "list-tools"
-	}
-	if strings.Contains(line, "CallToolRequest") {
+	switch {
+	case strings.Contains(line, "CallToolRequest"):
 		return "call-tool"
-	}
-	if strings.Contains(line, "ListResourcesRequest") {
+	case strings.Contains(line, "ListToolsRequest"):
+		return "list-tools"
+	case strings.Contains(line, "ListResourcesRequest"):
 		return "list-resources"
+	case strings.Contains(line, "ListPromptsRequest"):
+		return "list-prompts"
+	case strings.Contains(line, "ListResourceTemplatesRequest"):
+		return "list-resource-templates"
+	default:
+		return ""
 	}
-	return ""
 }
+
+// ---------- main ----------
 
 func main() {
 	sbxLog := os.Getenv("SBX_DAEMON_LOG")
 	if sbxLog == "" {
 		sbxLog = "/var/log/sbx/sandboxes/sandboxd/daemon.log"
 	}
+	mcpLog := os.Getenv("SBX_MCP_LOG")
+	if mcpLog == "" {
+		// Derive from sbxLog by replacing the leaf
+		mcpLog = strings.TrimSuffix(sbxLog, "/daemon.log") + "/mcp/mcp.log"
+	}
 	addr := os.Getenv("LISTEN_ADDR")
 	if addr == "" {
 		addr = ":8090"
 	}
+	labspaceUser = firstNonEmpty(
+		os.Getenv("LABSPACE_USER"),
+		os.Getenv("USER"),
+		"unknown",
+	)
 
 	h := newHub()
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
 	go tailSbxLog(ctx, sbxLog, h)
+	go tailMcpLog(ctx, mcpLog, h)
 	go tailMcpGateway(ctx, h)
 
 	mux := http.NewServeMux()
@@ -325,6 +478,17 @@ func main() {
 		_ = json.NewEncoder(w).Encode(h.snapshot())
 	})
 
+	mux.HandleFunc("/api/meta", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{
+			"user":             labspaceUser,
+			"sbx_daemon_log":   sbxLog,
+			"sbx_mcp_log":      mcpLog,
+			"user_is_synth":    true,
+			"native_user_in_v0_32_0": false,
+		})
+	})
+
 	mux.HandleFunc("/api/ws", func(w http.ResponseWriter, r *http.Request) {
 		c, err := upgrader.Upgrade(w, r, nil)
 		if err != nil {
@@ -332,7 +496,6 @@ func main() {
 		}
 		h.add(c)
 		defer h.remove(c)
-		// keep connection alive, drop client on first read error
 		for {
 			if _, _, err := c.NextReader(); err != nil {
 				return
@@ -347,7 +510,7 @@ func main() {
 	sub, _ := fs.Sub(staticFS, "static")
 	mux.Handle("/", http.FileServer(http.FS(sub)))
 
-	log.Printf("observability listening on %s (sbx log: %s)", addr, sbxLog)
+	log.Printf("observability listening on %s (sbx=%s, mcp=%s, user=%s)", addr, sbxLog, mcpLog, labspaceUser)
 	if err := http.ListenAndServe(addr, mux); err != nil {
 		log.Fatal(err)
 	}

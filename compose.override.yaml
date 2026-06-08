@@ -35,10 +35,18 @@ services:
       - "8090:8090"
     environment:
       SBX_DAEMON_LOG: /var/log/sbx/sandboxes/sandboxd/daemon.log
+      SBX_MCP_LOG: /var/log/sbx/sandboxes/sandboxd/mcp/mcp.log
       LISTEN_ADDR: ":8090"
+      # Synthesised user identity stamped on every event. sbx v0.32.0
+      # doesn't emit user identity natively in audit events; we use the
+      # host user as a best-effort proxy. Override by setting LABSPACE_USER
+      # in your shell before running start-labspace.sh.
+      LABSPACE_USER: "${LABSPACE_USER:-${USER:-unknown}}"
     volumes:
       # macOS sbx daemon log path. On Linux this is typically
       # ~/.local/share/com.docker.sandboxes/ — adjust if running on Linux.
+      # The whole sandboxes dir is mounted so the backend can also read
+      # mcp/mcp.log alongside daemon.log.
       - "${HOME}/Library/Application Support/com.docker.sandboxes:/var/log/sbx:ro"
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
     restart: unless-stopped

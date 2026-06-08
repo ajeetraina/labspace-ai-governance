@@ -10,16 +10,25 @@ Useful for:
 
 ## What it shows
 
-- Every `governance policy evaluation` event from the sbx daemon log
-  - Decision (allow / deny), resource (e.g. `paste.ee:443`), matched rule, deny reason (explicit / implicit), source (local / remote)
-- Every log line from any running `docker/mcp-gateway` container
-  - Decision heuristic (denied/forbidden tokens), tool-call vs list-tools classification
-- Per-rule deny counts and top denied destinations
+Three live sources, normalised into one event stream:
+
+1. **`sbx` daemon log** (`sandboxes/sandboxd/daemon.log`, JSONL) — every `governance policy evaluation` event
+   - Decision (allow / deny), resource (e.g. `paste.ee:443`), matched rule, deny reason (explicit / implicit), source (local / remote)
+   - Sandbox/agent/session fields when sbx emits them (lifecycle events do, policy events don't yet)
+2. **`sbx` MCP log** (`sandboxes/sandboxd/mcp/mcp.log`, logfmt) — gateway lifecycle events (setup, start, errors)
+3. **`docker/mcp-gateway` container stdout** — every running gateway container, log lines classified as `call-tool` / `list-tools` / `list-resources` when patterns match
+
+Plus:
+
+- **Synthesised user identity** stamped on every event from `$USER` / `$LABSPACE_USER`. Visible in the header and in the new User column.
+- **MCP server destination detection** — events targeting `mcp.*`, `mcp-*`, `registry.modelcontextprotocol.io` get a purple dot in the table and surface in the "MCP servers reached" panel.
+- **MCP-only view** — one-click filter to hide non-MCP events.
 
 ## What it deliberately doesn't show
 
-- **User identity.** The sbx daemon log has no `user` or `sandbox_id` field today. This dashboard is "what was decided" not "who did it."
-- **Prompts or tool-call payloads.** Only metadata; never request bodies.
+- **Native user identity.** As of sbx v0.32.0, audit events still don't carry user identity. The user shown is synthesised from the host `$USER` — accurate for single-developer machines, useless for multi-tenant. Docker's marketing promises native user identity in audit events; when it lands we'll consume it automatically (the field name is just `user` or `user_email` — we already pass `Raw` through, so it'll surface).
+- **Prompts or tool-call payloads.** The sbx proxy does MITM TLS interception so it *could* log request bodies, but doesn't. Only network metadata is captured. Almost certainly a deliberate privacy default.
+- **Per-tool audit for hosted MCP servers.** A call from your agent to a Notion MCP tool shows up only as a TCP connect to `mcp.notion.com:443` — you can see *that* the server was reached, not *which tool* was invoked or *what arguments* were passed. This requires upstream changes to the gateway and/or sbx.
 - **Cross-machine aggregation.** This is per-host. For org-wide audit, forward the JSONL daemon log to a SIEM.
 
 ## Quick start

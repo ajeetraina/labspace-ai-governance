@@ -48,18 +48,21 @@ jq -r 'select(.msg == "governance policy evaluation" and .allowed == false) | .p
 
 This is your SIEM-ready surface. Forward this file to Splunk/Datadog/Sentinel and you have an org-grade audit trail for sandbox policy decisions.
 
-## What's captured and what isn't
+## What's captured and what isn't (reconciled with Docker's marketing)
 
-| Captured today | Not captured today |
+Docker's [AI Governance page](https://www.docker.com/products/ai-governance/) describes audit events as containing "user identity, timestamp, session context, and triggering rule." Here's what v0.32.0 actually emits today, mapped against that claim:
+
+| Marketing claim | v0.32.0 reality |
 |---|---|
-| Timestamp | User identity |
-| Resource (domain, port, path) | Sandbox name (sandbox_id) |
-| Decision (allow/deny) | Prompt or tool-call payload |
-| Matched rule name | MCP tool-call audit (separate roadmap) |
-| Deny reason (explicit / implicit) | Cross-machine aggregation |
-| Policy source (local / remote) | |
+| Timestamp | ✅ on every event |
+| Triggering rule | ✅ `policy_matched_rule` |
+| Session context | ⚠️ Partial — `session`, `sandbox`, `agent`, `runtime` fields appear on lifecycle events (gateway start, sandbox spawn) but **not** on `governance policy evaluation` events |
+| User identity | ❌ Not in any field today. The dashboard synthesises it from `$USER` on the host as a best-effort proxy. |
+| SIEM export | ✅ JSONL is already the format |
 
-The audit log answers *what was decided and why*. It doesn't yet answer *who triggered it on this machine* — that's roadmap.
+Plus a third log file — **`mcp/mcp.log`** alongside `daemon.log` — that captures MCP gateway lifecycle events in logfmt (`setupMCPGateway called`, `gateway started in sandboxd`, etc.). The dashboard tails it as a separate source.
+
+The audit log answers *what was decided and why*, with sandbox attribution on some events. It does not yet answer *who triggered it* across multiple users on one machine — Docker's marketing implies this is coming, but as of v0.32.0 it still isn't in any field, so the dashboard keeps synthesising the user from `$USER`.
 
 ## Step 3 — Dashboard (already running)
 
@@ -103,9 +106,26 @@ The per-rule deny count panel on the left updates live.
 
 ## Step 5 — Layer MCP traffic on top (optional)
 
-If you have the Variant B MCP gateway from Section 06 running on `localhost:8811`, the dashboard automatically picks up its logs (it discovers any running container whose image name contains `mcp-gateway`).
+If you have the Variant B MCP gateway from Section 06 running on `localhost:8811`, the dashboard automatically picks up its logs — it discovers any running container whose image name contains `mcp-gateway` and **follows its log output from the moment the dashboard attaches**.
 
-Trigger an MCP call through it and you'll see entries with source `mcp-gateway` alongside the sbx rows — both signals in one screen.
+One gotcha worth knowing: the dashboard tails *new* gateway log lines only — it does not replay history. So an **idle** gateway shows nothing under the `mcp-gateway` source; you have to send it a request *after* the dashboard is up. The block below opens an MCP session and drives a tool call through the gateway:
+
+```bash terminal-id=main
+# Keep an SSE session open in the background, then drive a tool call through it
+curl -sN http://localhost:8811/sse > /tmp/mcp_sse.log 2>&1 &
+SSE_PID=$!; sleep 1.5
+URL="http://localhost:8811$(grep -m1 '^data: ' /tmp/mcp_sse.log | sed 's/^data: //' | tr -d '\r')"
+curl -s -X POST "$URL" -H 'Content-Type: application/json' \
+  -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"lab","version":"1.0"}}}' >/dev/null
+curl -s -X POST "$URL" -H 'Content-Type: application/json' \
+  -d '{"jsonrpc":"2.0","method":"notifications/initialized"}' >/dev/null
+curl -s -X POST "$URL" -H 'Content-Type: application/json' \
+  -d '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"search","arguments":{"query":"docker mcp gateway"}}}' >/dev/null
+sleep 2; kill $SSE_PID 2>/dev/null
+echo "Done — check the dashboard's mcp-gateway source."
+```
+
+Switch to the dashboard, click the **mcp-gateway** source filter, and make sure **info** is enabled under Decision (these are INFO-level events). You'll see `tool=search` / `call-tool` rows appear alongside the sbx policy rows — both signals in one screen.
 
 ## What you just demonstrated
 
