@@ -9,7 +9,7 @@ By the end you will have:
 - A clear mental model of the four registration modes and when to use each
 
 **Time:** ~15 minutes
-**Prerequisites:** Sections 00 and 01. You do **not** need admin rights for `$$org$$` — everything here runs locally.
+**Prerequisites:** Sections 00 and 01, plus a Docker login (`sbx login`) for the recommended Variant A control plane. You do **not** need admin rights for `$$org$$`.
 
 ## Why this isn't in the stable `--help`
 
@@ -57,15 +57,26 @@ You'll see the usual commands (`create`, `run`, `policy`, `secret`, etc.) but **
 
 `SBX_MCP_URL` is the gate. Any reachable http/https URL turns the command on — pick whichever variant below fits your setup.
 
-### Variant A — Community registry (zero infra)
+### Variant A — Docker MCP Gateway (hosted control plane)
 
-The simplest path. Point at the public MCP community registry:
+The recommended path. Point at Docker's production MCP Gateway — the hosted control plane that brokers per-server OAuth on your Docker Hub identity and manages gateways inside each sandbox.
+
+**This path requires a Docker login.** Authenticate first:
 
 ```bash no-run-button
-export SBX_MCP_URL=https://registry.modelcontextprotocol.io
+sbx login
+```
+
+Then enable MCP and restart the daemon so it picks up the new control plane:
+
+```bash no-run-button
+export SBX_MCP_URL=https://connect.docker.com
+sbx daemon stop          # the daemon reads SBX_MCP_URL on startup; it auto-restarts on your next `sbx` call
 sbx --help | grep mcp
 sbx mcp --help
 ```
+
+> `connect.docker.com` is publicly reachable — Tailscale / Docker VPN is **not** required — but you **must** be logged in via `sbx login`; the control plane brokers OAuth against your Docker Hub identity. With it set, `sbx mcp add <name>` against catalog-backed servers (Notion, GitHub, Linear) walks you through a hosted OAuth flow, and credentials are stored in the control plane rather than as plaintext env vars.
 
 ### Variant B — Your own local MCP Gateway
 
@@ -92,13 +103,9 @@ sbx mcp --help
 > ⚠️ **What this does and doesn't do.** Setting `SBX_MCP_URL` to a local gateway **unlocks the `sbx mcp` subtree** (any URL does that), but the local gateway is the **data plane** — it doesn't implement the OAuth/catalog control-plane endpoints that `sbx mcp add --url <hosted-server>` expects. So:
 >
 > - ✅ Modes 2/3 (community registry) and Mode 4 (local stdio) work normally
-> - ❌ Mode 1 (`--url https://...`) will still try OAuth discovery against the *target* server, not your local gateway — same behavior as Variant A
+> - ❌ Mode 1 (`--url https://...`) will still try OAuth discovery against the *target* server directly — the local gateway can't broker the hosted OAuth flow the way the Variant A control plane does
 >
 > The local gateway is most useful when you separately invoke MCP tools through it (e.g., from Claude Desktop or a custom client pointed at `http://localhost:8811`) rather than as a control plane for `sbx`.
-
-### Variant C — 🔒 Docker Insiders
-
-If you're on a Docker team or in the preview program, `SBX_MCP_URL` should point at Docker's **hosted MCP control plane** — the service that brokers per-server OAuth on your Docker Hub identity and manages gateways inside each sandbox. Ask in the internal sbx Slack channel for the current URL. With that URL set, `sbx mcp add <name>` against catalog-backed servers (Notion, GitHub, Linear) walks you through a hosted OAuth flow on your Hub login.
 
 ---
 
@@ -166,7 +173,7 @@ Pointing `sbx` at a real hosted MCP server triggers OAuth discovery. With `--ski
 sbx mcp add notion --url https://mcp.notion.com/mcp --skip_auth
 ```
 
-> 🔒 **Docker Insiders bonus.** Without `--skip_auth` (and with `SBX_MCP_URL` pointing at the real hosted control plane), this command opens a browser tab, walks you through Notion OAuth tied to your Docker Hub identity, and registers the resulting credentials in the control plane so they're available to every sandbox you spin up — not stored as plaintext env vars on disk.
+> 💡 **With the Variant A control plane.** Without `--skip_auth` (and with `SBX_MCP_URL=https://connect.docker.com`), this command opens a browser tab, walks you through Notion OAuth tied to your Docker Hub identity, and registers the resulting credentials in the control plane so they're available to every sandbox you spin up — not stored as plaintext env vars on disk.
 
 ## Step 8 — Clean up
 
