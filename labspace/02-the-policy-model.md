@@ -22,7 +22,7 @@ Admin Console  ──auth flow──▶  Developer Docker Desktop  ──cache�
 
 When the admin changes a policy, developers pick up the change on next sync. To force an immediate refresh:
 
-```bash terminal-id=main
+```bash no-run-button
 sbx policy reset
 ```
 
@@ -46,7 +46,7 @@ This means:
 
 Run this to see what's currently active:
 
-```bash terminal-id=main
+```bash no-run-button
 sbx policy ls
 ```
 

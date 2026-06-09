@@ -22,13 +22,13 @@ You can change this any time.
 
 Verify sbx is installed:
 
-```bash terminal-id=main
+```bash no-run-button
 sbx version
 ```
 
 Verify you're logged in to Docker:
 
-```bash terminal-id=main
+```bash no-run-button
 docker login
 ```
 

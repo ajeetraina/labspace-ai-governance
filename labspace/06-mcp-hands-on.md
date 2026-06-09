@@ -25,13 +25,13 @@ Once you set `SBX_MCP_URL` to any absolute http/https URL, the entire `mcp` subt
 
 The stable Homebrew formula may lag behind the nightly on MCP features. Use the nightly tap on macOS:
 
-```bash terminal-id=main
+```bash no-run-button
 brew install docker/tap/sbx@nightly
 ```
 
 If you already have stable installed, switch the symlink:
 
-```bash terminal-id=main
+```bash no-run-button
 brew unlink sbx 2>/dev/null; brew link --overwrite sbx@nightly
 ```
 
@@ -39,7 +39,7 @@ On Linux or Windows, grab the latest pre-release asset from the [releases page](
 
 Verify your version:
 
-```bash terminal-id=main
+```bash no-run-button
 sbx version
 ```
 
@@ -47,7 +47,7 @@ sbx version
 
 Before setting the env var, look at what's in `sbx --help`:
 
-```bash terminal-id=main
+```bash no-run-button
 sbx --help | grep -iE "mcp|Available Commands" | head -20
 ```
 
@@ -61,7 +61,7 @@ You'll see the usual commands (`create`, `run`, `policy`, `secret`, etc.) but **
 
 The simplest path. Point at the public MCP community registry:
 
-```bash terminal-id=main
+```bash no-run-button
 export SBX_MCP_URL=https://registry.modelcontextprotocol.io
 sbx --help | grep mcp
 sbx mcp --help
@@ -73,7 +73,7 @@ The open-source [`docker/mcp-gateway`](https://github.com/docker/mcp-gateway) is
 
 Create a working directory and pull the lab's prebuilt Compose file:
 
-```bash terminal-id=main
+```bash no-run-button
 mkdir -p ~/mcp-gateway-lab && cd ~/mcp-gateway-lab
 curl -fsSL https://raw.githubusercontent.com/ajeetraina/labspace-ai-governance/main/labspace/assets/mcp-gateway-compose.yaml -o compose.yaml
 cat compose.yaml
@@ -83,7 +83,7 @@ The Compose file runs `docker/mcp-gateway` with the DuckDuckGo server enabled, m
 
 Start it and point `sbx` at it:
 
-```bash terminal-id=main
+```bash no-run-button
 docker compose up -d
 export SBX_MCP_URL=http://localhost:8811
 sbx mcp --help
@@ -126,19 +126,19 @@ A few rules baked into the binary that will save you debugging time:
 
 The most reliable path that needs nothing beyond your machine. Register a local DuckDuckGo MCP server that runs as a Docker container in stdio mode:
 
-```bash terminal-id=main
+```bash no-run-button
 sbx mcp add local-ddg --command docker --args "run,-i,--rm,--init,mcp/duckduckgo"
 ```
 
 List what's registered:
 
-```bash terminal-id=main
+```bash no-run-button
 sbx mcp ls
 ```
 
 Inspect the server you just added:
 
-```bash terminal-id=main
+```bash no-run-button
 sbx mcp inspect local-ddg
 ```
 
@@ -148,13 +148,13 @@ sbx mcp inspect local-ddg
 
 The community registry hosts MCP servers as OCI images. `sbx` pulls the registry entry, extracts the image reference, and (in managed mode) runs it in the MCP gateway infrastructure.
 
-```bash terminal-id=main
+```bash no-run-button
 sbx mcp add fetch --url https://registry.modelcontextprotocol.io/v0/servers/fetch-mcp/versions/latest
 ```
 
 If managed-infrastructure mode isn't available in your environment (no control plane), append `--local` to run the OCI image directly on your host via `docker run`:
 
-```bash terminal-id=main
+```bash no-run-button
 sbx mcp add fetch-local --url https://registry.modelcontextprotocol.io/v0/servers/fetch-mcp/versions/latest --local
 ```
 
@@ -162,7 +162,7 @@ sbx mcp add fetch-local --url https://registry.modelcontextprotocol.io/v0/server
 
 Pointing `sbx` at a real hosted MCP server triggers OAuth discovery. With `--skip_auth` you can register the entry without going through the hosted OAuth dance:
 
-```bash terminal-id=main
+```bash no-run-button
 sbx mcp add notion --url https://mcp.notion.com/mcp --skip_auth
 ```
 
@@ -172,7 +172,7 @@ sbx mcp add notion --url https://mcp.notion.com/mcp --skip_auth
 
 Remove the test servers when you're done:
 
-```bash terminal-id=main
+```bash no-run-button
 sbx mcp rm local-ddg fetch fetch-local notion 2>/dev/null; sbx mcp ls
 ```
 
