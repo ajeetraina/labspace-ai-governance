@@ -18,7 +18,8 @@
 
 set -e
 
-TTYD_PORT=8085
+TTYD_PORT=8085        # primary terminal (the "IDE" tab in the interface)
+TTYD_PORT2=8087       # second terminal (the "Terminal 2" service tab)
 COMPOSE_FILE="compose.override.yaml"
 
 # ── Color helpers ──────────────────────────────────────────────
