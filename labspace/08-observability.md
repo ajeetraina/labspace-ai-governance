@@ -18,7 +18,7 @@ This section gives you two things:
 
 The sbx daemon writes JSONL audit records here:
 
-```bash terminal-id=main
+```bash no-run-button
 ls -lh "$HOME/Library/Application Support/com.docker.sandboxes/sandboxes/sandboxd/daemon.log"
 ```
 
@@ -28,7 +28,7 @@ On Linux it's typically `~/.local/share/com.docker.sandboxes/sandboxes/sandboxd/
 
 Each policy decision is one JSON line. The `msg` field is `"governance policy evaluation"`, and useful fields include `resource_value`, `allowed`, `policy_matched_rule`, `policy_deny_reason`, `policy_source`.
 
-```bash terminal-id=main
+```bash no-run-button
 LOG="$HOME/Library/Application Support/com.docker.sandboxes/sandboxes/sandboxd/daemon.log"
 
 # Last 20 policy decisions
@@ -68,14 +68,14 @@ The audit log answers *what was decided and why*, with sandbox attribution on so
 
 `start-labspace.sh` already brought up the dashboard alongside the labspace UI — it's the embedded panel at the top of this section. If you'd rather run it standalone (e.g., from a different machine, or without the labspace UI), the kit at `labspace/kits/observability/` ships an identical compose file:
 
-```bash terminal-id=main
+```bash no-run-button
 cd ~/work/labspace-ai-governance/labspace/kits/observability
 docker compose --profile with-gateway up -d --build
 ```
 
 Then open it in a fresh browser tab:
 
-```bash terminal-id=main
+```bash no-run-button
 open http://localhost:8090
 ```
 
@@ -83,14 +83,14 @@ open http://localhost:8090
 
 In another terminal, enter a sandbox and trigger denies:
 
-```bash terminal-id=main
+```bash no-run-button
 mkdir -p ~/scratch && cd ~/scratch
 sbx run shell .
 ```
 
 Inside the sandbox prompt:
 
-```bash terminal-id=main
+```bash no-run-button
 curl -sS https://collabnix.com -o /dev/null -w "%{http_code}\n"
 curl -sS https://example.com -o /dev/null -w "%{http_code}\n"
 curl -sS https://api.anthropic.com -o /dev/null -w "%{http_code}\n"
@@ -110,7 +110,7 @@ If you have the Variant B MCP gateway from Section 06 running on `localhost:8811
 
 One gotcha worth knowing: the dashboard tails *new* gateway log lines only — it does not replay history. So an **idle** gateway shows nothing under the `mcp-gateway` source; you have to send it a request *after* the dashboard is up. The block below opens an MCP session and drives a tool call through the gateway:
 
-```bash terminal-id=main
+```bash no-run-button
 # Keep an SSE session open in the background, then drive a tool call through it
 curl -sN http://localhost:8811/sse > /tmp/mcp_sse.log 2>&1 &
 SSE_PID=$!; sleep 1.5

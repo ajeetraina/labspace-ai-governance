@@ -80,7 +80,7 @@ After this, the final rule list should have exactly **three rules**:
 
 Back on your terminal:
 
-```bash terminal-id=main
+```bash no-run-button
 sbx policy reset
 ```
 
@@ -88,7 +88,7 @@ When prompted, choose **Balanced** (option 2).
 
 Then list active policies:
 
-```bash terminal-id=main
+```bash no-run-button
 sbx policy ls
 ```
 
@@ -103,7 +103,7 @@ That last line is the central control proof. Even though sbx ships with sensible
 
 ## Step 6 — Spin up a sandbox
 
-```bash terminal-id=main
+```bash no-run-button
 mkdir -p ~/scratch && cd ~/scratch
 sbx run shell .
 ```
@@ -116,7 +116,7 @@ You'll land at a shell prompt inside the sandbox.
 
 Inside the sandbox prompt:
 
-```bash terminal-id=main
+```bash no-run-button
 curl -sS https://api.anthropic.com -o /dev/null -w "anthropic: %{http_code}\n"
 curl -sS https://paste.ee -o /dev/null -w "paste.ee: %{http_code}\n"
 curl -sS https://example.com -o /dev/null -w "example.com: %{http_code}\n"
@@ -144,7 +144,7 @@ The distinction between 200/404 (origin server replied) and 403 (proxy refused) 
 
 For a more visceral demo, run a verbose `curl` from inside the sandbox:
 
-```bash terminal-id=main
+```bash no-run-button
 curl -v https://paste.ee 2>&1 | head -50
 ```
 
@@ -175,7 +175,7 @@ That `O=GoProxy untrusted MITM proxy Inc` is the proxy openly identifying itself
 
 To see the 403 itself, lengthen the head:
 
-```bash terminal-id=main
+```bash no-run-button
 curl -v https://paste.ee 2>&1 | head -80 | tail -30
 ```
 
@@ -185,7 +185,7 @@ For contrast, from your **host machine** (outside the sandbox), the same `curl -
 
 ## Step 10 — Exit the sandbox
 
-```bash terminal-id=main
+```bash no-run-button
 exit
 ```
 

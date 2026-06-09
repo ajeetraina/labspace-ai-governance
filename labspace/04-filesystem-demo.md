@@ -55,13 +55,13 @@ If a rule exists with path `~/**` or `/**` and action Allow, **delete it**. A ca
 
 ## Step 5 — Verify policies reached your machine
 
-```bash terminal-id=main
+```bash no-run-button
 sbx policy reset
 ```
 
 Choose **Balanced** when prompted.
 
-```bash terminal-id=main
+```bash no-run-button
 sbx policy ls
 ```
 
@@ -71,7 +71,7 @@ Scroll to filesystem rules. You should see `allow lab test directory` and `deny 
 
 Three separate workdirs so each `sbx run` creates a fresh sandbox without name collision:
 
-```bash terminal-id=main
+```bash no-run-button
 mkdir -p ~/labspace-fs-test/test-1
 mkdir -p ~/labspace-fs-test/test-2
 mkdir -p /tmp/labspace-fs-test-3
@@ -79,14 +79,14 @@ mkdir -p /tmp/labspace-fs-test-3
 
 ## Step 7 — Test 1: Allowed workdir, no extra mounts
 
-```bash terminal-id=main
+```bash no-run-button
 cd ~/labspace-fs-test/test-1
 sbx run shell .
 ```
 
 **Expected:** sandbox starts. You land at the shell prompt.
 
-```bash terminal-id=main
+```bash no-run-button
 exit
 ```
 
@@ -94,7 +94,7 @@ exit
 
 ## Step 8 — Test 2: Allowed workdir + denied extra mount
 
-```bash terminal-id=main
+```bash no-run-button
 cd ~/labspace-fs-test/test-2
 sbx run shell . ~/.ssh:ro
 ```
@@ -111,7 +111,7 @@ resource=fs:path:/Users/<you>/.ssh
 
 ## Step 9 — Test 3: Unallowed workdir (default-deny)
 
-```bash terminal-id=main
+```bash no-run-button
 cd /tmp/labspace-fs-test-3
 sbx run shell .
 ```
@@ -147,7 +147,7 @@ Same three-decision pattern as the network demo, just at a different layer:
 
 If you want to remove the test sandboxes between runs:
 
-```bash terminal-id=main
+```bash no-run-button
 sbx ls
 ```
 
