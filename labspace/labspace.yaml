@@ -22,11 +22,23 @@ sections:
   - title: Filesystem Enforcement Demo
     contentPath: 04-filesystem-demo.md
 
+  - title: Product Catalog
+    contentPath: 07-product-catalog.md
+
   - title: MCP Hands-On
     contentPath: 06-mcp-hands-on.md
 
   - title: Observability
     contentPath: 08-observability.md
+
+  - title: Monitoring Policies
+    contentPath: 09-monitoring-policies.md
+
+  - title: Audit Logging
+    contentPath: 10-audit-logging.md
+
+  - title: Governance API
+    contentPath: 11-governance-api.md
 
   - title: What's Next
     contentPath: 05-whats-next.md
