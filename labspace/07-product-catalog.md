@@ -30,14 +30,14 @@ The sandbox is the agent's **workbench**, not a deployment target. The catalog n
 
 The agent works on the catalog source on your laptop, so the sandbox needs to mount it. That mount only succeeds if a filesystem **allow** rule covers the path (Section 04's lesson).
 
-In **[app.docker.com/accounts/$$org$$](https://app.docker.com/accounts/$$org$$)** → **AI governance** → **Filesystem access**, confirm an allow rule covers where you'll clone the repo. For example:
+In **[app.docker.com/accounts/$$org$$](https://app.docker.com/accounts/$$org$$)** → **AI governance** → **Filesystem access**, confirm the `allow workdemo` rule from Section 02 covers where you'll clone the repo:
 
 - Action: **Allow**
-- Filesystem path: `~/work/**`
+- Filesystem path: `~/workdemo/**`
 - Action scope: **Read, Write**
-- Name: `allow work directory`
+- Name: `allow workdemo`
 
-> Use `**`, not `*` — a single `*` won't match across `/`, so `~/work/*` would miss `~/work/catalog-service-node/src`.
+> Use `**`, not `*` — a single `*` won't match across `/`, so `~/workdemo/*` would miss `~/workdemo/catalog-service-node/src`.
 
 After editing any governance policy, force a fresh pull so the sandbox daemon doesn't serve a stale cache:
 
@@ -51,7 +51,7 @@ You should see the allow rule with `ORIGIN: remote` before continuing.
 ## Step 2 — Clone the Product Catalog into the allowed path
 
 ```bash no-run-button
-cd ~/work
+cd ~/workdemo
 git clone https://github.com/dockersamples/catalog-service-node
 cd catalog-service-node
 ```
@@ -117,7 +117,7 @@ Now watch. The agent will, **entirely inside the sandbox**:
 Because the source is bind-mounted, the agent's edits are already in your local tree. Open a host terminal:
 
 ```bash no-run-button
-cd ~/work/catalog-service-node
+cd ~/workdemo/catalog-service-node
 git diff
 ```
 

@@ -104,7 +104,7 @@ That last line is the central control proof. Even though sbx ships with sensible
 ## Step 6 — Spin up a sandbox
 
 ```bash no-run-button
-mkdir -p ~/scratch && cd ~/scratch
+mkdir -p ~/workdemo/scratch && cd ~/workdemo/scratch
 sbx run shell .
 ```
 
