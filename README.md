@@ -16,6 +16,13 @@ A hands-on lab that proves how Docker AI Governance policies flow from one Admin
 
 By the end you have a defensible enforcement story you can walk a security team through.
 
+## Two ways to set up policies
+
+This labspace supports two methods for authoring and applying AI Governance policies - both write to the same source of truth, so you can pick whichever fits your workflow:
+
+1. **AI Governance API** - Drive the control plane programmatically over HTTP. Author, update, and apply policies via API calls (see Section 11). Ideal for automation, CI/CD, and infrastructure-as-code workflows.
+2. **Manual Setup** - Use the Hub Admin Console UI at `app.docker.com/admin/orgs/<your-org>` to toggle and author policy rules by hand. Ideal for getting started and for teams who prefer a visual workflow.
+
 ## Quick start
 
 ```bash
