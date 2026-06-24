@@ -11,6 +11,8 @@ A hands-on lab that proves how Docker AI Governance policies flow from one Admin
 - Filesystem rules are enforced at sandbox creation time - denied mounts cause `sbx run` to fail before the agent ever runs
 - The default-deny posture catches anything not covered by an allow rule
 - Developers cannot override `ORIGIN: remote` policies locally
+- MCP servers register through `sbx mcp` behind the **Docker MCP Gateway**, so sandboxed agents reach tools through one governed control plane
+- Policies can be authored two ways - the Hub Admin Console UI or the **Docker AI Governance API** - both writing to the same source of truth
 
 By the end you have a defensible enforcement story you can walk a security team through.
 
@@ -38,10 +40,16 @@ If you don't have an organization yet, you can still walk through Sections 00-02
 | --- | --- | --- | --- |
 | 00 | Setup | 2 min | Pick your org and verify sbx is installed |
 | 01 | Why AI Governance | 3 min | Horror stories, three pillars framing |
-| 02 | The Policy Model | 5 min | Conceptual: how org → developer policy flow works |
+| 02 | The Policy Model | 5 min | Conceptual: two policy-authoring paths (Hub Admin Console + Governance API) and how org → developer policy flow works |
 | 03 | Network Enforcement Demo | 10 min | Three `curl` commands, three outcomes (allow / deny / default-deny) |
 | 04 | Filesystem Enforcement Demo | 10 min | Three `sbx run` attempts, same three outcomes |
+| 07 | Product Catalog | 15 min | Turn an autonomous coding agent loose on a real Node.js app, contained by your policies |
+| 06 | MCP Hands-On | 15 min | Register MCP servers with `sbx mcp` behind the Docker MCP Gateway (remote OAuth, docker.io image, local stdio) |
+| 08 | Observability | 10 min | Inspect the audit trail and the live sbx/MCP dashboard |
+| 09 | Monitoring Policies | 10 min | Watch policy decisions as they happen |
+| 10 | Audit Logging | 10 min | Trace every allow/deny back to a rule |
+| 11 | Governance API | 15 min | Drive the same control plane programmatically over HTTP |
 | 05 | What's Next | 5 min | Preview of audit trails and MCP Tool Governance |
 
-Total walkthrough: ~35 minutes.
+Total walkthrough: ~110 minutes.
 
