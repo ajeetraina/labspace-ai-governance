@@ -18,6 +18,14 @@ By the end you have a defensible enforcement story you can walk a security team 
 
 ## Quick start
 
+### Launch the labspace directly
+
+```bash
+docker labspace launch ajeetraina777/labspace-ai-governance
+```
+
+### Running it locally
+
 ```bash
 git clone https://github.com/ajeetraina/labspace-ai-governance
 cd labspace-ai-governance
