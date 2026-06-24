@@ -90,8 +90,10 @@ export ORG=$$org$$
 if [ -n "$TOKEN" ] && [ "$TOKEN" != "null" ]; then
   echo "Reusing the token from Section 03."
 else
-  read -rp  "Docker Hub username: " DOCKER_USER
-  read -rsp "Personal Access Token: " DOCKER_PAT; echo
+  printf "Docker Hub username: "
+  read -r DOCKER_USER
+  printf "Personal Access Token: "
+  stty -echo; read -r DOCKER_PAT; stty echo; printf "\n"
 
   RESPONSE="$(curl -fsS -X POST https://hub.docker.com/v2/users/login \
     -H "Content-Type: application/json" \
