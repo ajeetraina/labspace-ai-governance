@@ -125,7 +125,7 @@ sbx policy log --json
 Make some decisions happen, then read them back. In a sandbox (Section 03 setup):
 
 ```bash no-run-button
-mkdir -p ~/scratch && cd ~/scratch
+mkdir -p ~/workdemo/scratch && cd ~/workdemo/scratch
 sbx run shell .
 ```
 

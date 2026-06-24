@@ -72,4 +72,35 @@ Governance: managed by $$org$$
 
 If `Governance` says anything other than `$$org$$`, check that you're logged in with the right account (`docker login`) and that the account is a member of `$$org$$`.
 
+## Set up your lab working directory
+
+Every `sbx run` in this lab launches from a single directory: **`~/workdemo`**. Create it now:
+
+```bash no-run-button
+mkdir -p ~/workdemo
+```
+
+Then **allowlist it in the filesystem policy** so sandboxes are allowed to mount it. In the Admin Console at **[app.docker.com/accounts/$$org$$](https://app.docker.com/accounts/$$org$$)** → **AI governance** → **Filesystem access**, add:
+
+- Action: **Allow**
+- Filesystem path: `~/workdemo/**`
+- Action scope: **Read, Write**
+- Name: `allow workdemo`
+
+> ⚠️ **Why this is required first.** Filesystem policy is **default-deny** and checked at sandbox-creation time. If `~/workdemo` isn't covered by an allow rule, every `sbx run` in this lab fails before the sandbox even starts:
+>
+> ```
+> ERROR: failed to create sandbox: ... status 403: mount policy denied:
+> /Users/<you>/workdemo: no applicable policies for
+> op(action=fs:mount:write, resource=fs:path:/Users/<you>/workdemo)
+> ```
+>
+> Add this allow rule before running any demo. Section 04 goes deeper on filesystem enforcement.
+
+After adding the rule, force a sync and confirm it reached your machine:
+
+```bash no-run-button
+sbx policy reset    # choose Balanced when prompted
+```
+
 That's the model. Now let's prove it works end-to-end.
