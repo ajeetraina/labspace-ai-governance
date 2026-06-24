@@ -50,7 +50,7 @@ done
 if [[ -z "${TOKEN:-}" ]]; then
   if [[ -n "${USERNAME:-}" && -n "${PASSWORD:-}" ]]; then
     echo "→ Exchanging credentials for a bearer token..."
-    TOKEN="$(curl -fsS -X POST "$BASE_URL/auth/token" \
+    TOKEN="$(curl -fsS -X POST "$BASE_URL/users/login" \
       -H "Content-Type: application/json" \
       -d "$(jq -n --arg u "$USERNAME" --arg p "$PASSWORD" '{username:$u, password:$p}')" \
       | jq -r '.token')"
