@@ -79,27 +79,32 @@ If a rule exists with path `~/**` or `/**` and action Allow, **delete it**. A ca
 
 If you ran `setup-policies.sh` with **no argument** in Section 03, the filesystem policy is **already created** - jump straight to Step 2.
 
-To create it on its own, make sure `ORG` and `TOKEN` are still exported. If you set up your token in Section 03, they already are - otherwise run this to mint one (the PAT is read silently, so it never appears on screen):
+To create it on its own, make sure `ORG` and `TOKEN` are still exported. The block below reuses the token from Section 03 if it's still set, and only prompts for your username and PAT when one isn't found (the PAT is read silently, so it never appears on screen):
 
 > [!WARNING]
 > A Personal Access Token is a secret. Enter it only at the silent prompt below - prefer a scoped PAT over your account password so it can be revoked.
 
 ```bash no-run-button
-read -rp  "Docker Hub username: " DOCKER_USER
-read -rsp "Personal Access Token: " DOCKER_PAT; echo
-
-RESPONSE="$(curl -fsS -X POST https://hub.docker.com/v2/users/login \
-  -H "Content-Type: application/json" \
-  -d "{\"username\":\"$DOCKER_USER\",\"password\":\"$DOCKER_PAT\"}")"
-
 export ORG=$$org$$
-if command -v jq >/dev/null 2>&1; then
-  export TOKEN="$(printf '%s' "$RESPONSE" | jq -r '.token')"
-else
-  export TOKEN="$(printf '%s' "$RESPONSE" | grep -o '"token":"[^"]*"' | sed 's/.*:"//;s/"$//')"
-fi
 
-[ -n "$TOKEN" ] && [ "$TOKEN" != "null" ] && echo "Token captured." || echo "Failed to get token - check your username/PAT."
+if [ -n "$TOKEN" ] && [ "$TOKEN" != "null" ]; then
+  echo "Reusing the token from Section 03."
+else
+  read -rp  "Docker Hub username: " DOCKER_USER
+  read -rsp "Personal Access Token: " DOCKER_PAT; echo
+
+  RESPONSE="$(curl -fsS -X POST https://hub.docker.com/v2/users/login \
+    -H "Content-Type: application/json" \
+    -d "{\"username\":\"$DOCKER_USER\",\"password\":\"$DOCKER_PAT\"}")"
+
+  if command -v jq >/dev/null 2>&1; then
+    export TOKEN="$(printf '%s' "$RESPONSE" | jq -r '.token')"
+  else
+    export TOKEN="$(printf '%s' "$RESPONSE" | grep -o '"token":"[^"]*"' | sed 's/.*:"//;s/"$//')"
+  fi
+
+  [ -n "$TOKEN" ] && [ "$TOKEN" != "null" ] && echo "Token captured." || echo "Failed to get token - check your username/PAT."
+fi
 ```
 
 Then run the helper scoped to the filesystem domain:
