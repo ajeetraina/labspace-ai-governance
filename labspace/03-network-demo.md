@@ -115,10 +115,16 @@ Run this in your terminal. It prompts for your username and a Personal Access To
 read -rp  "Docker Hub username: " DOCKER_USER
 read -rsp "Personal Access Token: " DOCKER_PAT; echo
 
-export ORG=$$org$$
-export TOKEN="$(curl -fsS -X POST https://hub.docker.com/v2/users/login \
+RESPONSE="$(curl -fsS -X POST https://hub.docker.com/v2/users/login \
   -H "Content-Type: application/json" \
-  -d "{\"username\":\"$DOCKER_USER\",\"password\":\"$DOCKER_PAT\"}" | jq -r '.token')"
+  -d "{\"username\":\"$DOCKER_USER\",\"password\":\"$DOCKER_PAT\"}")"
+
+export ORG=$$org$$
+if command -v jq >/dev/null 2>&1; then
+  export TOKEN="$(printf '%s' "$RESPONSE" | jq -r '.token')"
+else
+  export TOKEN="$(printf '%s' "$RESPONSE" | grep -o '"token":"[^"]*"' | sed 's/.*:"//;s/"$//')"
+fi
 
 [ -n "$TOKEN" ] && [ "$TOKEN" != "null" ] && echo "Token captured." || echo "Failed to get token - check your username/PAT."
 ```
