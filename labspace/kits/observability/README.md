@@ -51,7 +51,7 @@ The gateway runs with `--verbose=true` so per-request log lines are emitted to s
 In a separate terminal, trigger some events:
 
 ```bash
-mkdir -p ~/scratch && cd ~/scratch
+mkdir -p ~/workdemo/scratch && cd ~/workdemo/scratch
 sbx run shell .
 # inside the sandbox:
 curl -sS https://collabnix.com -o /dev/null -w "%{http_code}\n"

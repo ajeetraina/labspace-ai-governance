@@ -12,7 +12,7 @@
 #     deny exfiltration      (deny)   paste.ee, pastebin.com, hooks.slack.com
 #
 #   Filesystem policy "Labspace AI Governance - filesystem"
-#     allow lab test directory (allow)  ~/labspace-fs-test/**
+#     allow workdemo           (allow)  ~/workdemo/**
 #     deny credentials         (deny)   ~/.ssh/**, ~/.aws/**, ~/.config/gcloud/**, ...
 #
 # A policy holds rules for a single domain (network OR filesystem), so this
@@ -126,8 +126,8 @@ setup_filesystem() {
   local pid; pid="$(find_or_create_policy "Labspace AI Governance - filesystem")"
   echo "   policy id: $pid"
   EXISTING="$(existing_rule_names "$pid")"
-  add_rule "$pid" "allow lab test directory" allow "$FS_ACTIONS" \
-    '["~/labspace-fs-test/**"]'
+  add_rule "$pid" "allow workdemo" allow "$FS_ACTIONS" \
+    '["~/workdemo/**"]'
   add_rule "$pid" "deny credentials" deny "$FS_ACTIONS" \
     '["~/.ssh/**","~/.aws/**","~/.config/gcloud/**","~/.kube/config","~/.docker/config.json"]'
 }

@@ -38,16 +38,16 @@ Open **[app.docker.com/accounts/$$org$$](https://app.docker.com/accounts/$$org$$
 
 The page works the same way as Network access, but rules are scoped to paths (with glob support) and actions (Read / Write).
 
-### Add the allow rule for the test directory
+## Step 2 - Confirm the allow rule for your working directory
 
-You need at least one allow rule so the sandbox can be created. Add:
+You need at least one allow rule so the sandbox can be created. You already added this in Section 02:
 
 - Action: **Allow**
-- Filesystem path: `~/labspace-fs-test/**`
+- Filesystem path: `~/workdemo/**`
 - Action scope: **Read, Write**
-- Name: `allow lab test directory`
+- Name: `allow workdemo`
 
-The `**` matches recursively. You can add other allow rules for `~/work/`, `~/code/`, etc., but the dedicated test directory keeps the lab isolated.
+The `**` matches recursively. If you skipped Section 02, add it now. You can add other allow rules for `~/code/`, etc., but the dedicated `~/workdemo` directory keeps the lab isolated.
 
 ### Add the deny rule
 
@@ -88,7 +88,7 @@ bash setup-policies.sh filesystem
 
 This creates a policy named **`Labspace AI Governance - filesystem`** with the same two rules as the manual path:
 
-- `allow lab test directory` (allow, read + write) - `~/labspace-fs-test/**`
+- `allow workdemo` (allow, read + write) - `~/workdemo/**`
 - `deny credentials` (deny, read + write) - `~/.ssh/**`, `~/.aws/**`, `~/.config/gcloud/**`, `~/.kube/config`, `~/.docker/config.json`
 
 A fresh allowlist policy has no catch-all to remove, so the default-deny posture is active from the start. Re-running is safe - rules already present are detected by name and skipped.
@@ -107,22 +107,22 @@ Choose **Balanced** when prompted.
 sbx policy ls
 ```
 
-Scroll to filesystem rules. You should see `allow lab test directory` and `deny credentials` with `ORIGIN: remote`.
+Scroll to filesystem rules. You should see `allow workdemo` and `deny credentials` with `ORIGIN: remote`.
 
 ## Step 3 - Create the test directories
 
-Three separate workdirs so each `sbx run` creates a fresh sandbox without name collision:
+Three separate workdirs so each `sbx run` creates a fresh sandbox without name collision. Two live under the allowed `~/workdemo`; the third is deliberately **outside** it to prove default-deny:
 
 ```bash no-run-button
-mkdir -p ~/labspace-fs-test/test-1
-mkdir -p ~/labspace-fs-test/test-2
-mkdir -p /tmp/labspace-fs-test-3
+mkdir -p ~/workdemo/test-1
+mkdir -p ~/workdemo/test-2
+mkdir -p /tmp/outside-workdemo
 ```
 
 ## Step 4 - Test 1: Allowed workdir, no extra mounts
 
 ```bash no-run-button
-cd ~/labspace-fs-test/test-1
+cd ~/workdemo/test-1
 sbx run shell .
 ```
 
@@ -132,12 +132,12 @@ sbx run shell .
 exit
 ```
 
-✅ The `allow lab test directory` rule permits the mount.
+✅ The `allow workdemo` rule permits the mount.
 
 ## Step 5 - Test 2: Allowed workdir + denied extra mount
 
 ```bash no-run-button
-cd ~/labspace-fs-test/test-2
+cd ~/workdemo/test-2
 sbx run shell . ~/.ssh:ro
 ```
 
@@ -154,7 +154,7 @@ resource=fs:path:/Users/<you>/.ssh
 ## Step 6 - Test 3: Unallowed workdir (default-deny)
 
 ```bash no-run-button
-cd /tmp/labspace-fs-test-3
+cd /tmp/outside-workdemo
 sbx run shell .
 ```
 
@@ -162,11 +162,11 @@ sbx run shell .
 
 ```
 ERROR: failed to create sandbox: ... status 403: mount policy denied:
-/private/tmp/labspace-fs-test-3: no applicable policies for
-op(action=fs:mount:write, resource=fs:path:/private/tmp/labspace-fs-test-3)
+/private/tmp/outside-workdemo: no applicable policies for
+op(action=fs:mount:write, resource=fs:path:/private/tmp/outside-workdemo)
 ```
 
-✅ The sandbox **never starts**. No allow rule covers `/tmp/labspace-fs-test-3`, default-deny applies.
+✅ The sandbox **never starts**. No allow rule covers `/tmp/outside-workdemo`, default-deny applies.
 
 > Note: macOS resolves `/tmp` to `/private/tmp` - the policy engine sees the canonical path.
 
@@ -174,9 +174,9 @@ op(action=fs:mount:write, resource=fs:path:/private/tmp/labspace-fs-test-3)
 
 | Test | Workdir | Extra mount | Outcome | Why |
 | --- | --- | --- | --- | --- |
-| 1 | `~/labspace-fs-test/test-1` | none | Sandbox starts | Covered by `allow lab test directory` |
-| 2 | `~/labspace-fs-test/test-2` | `~/.ssh:ro` | 403, no sandbox | Blocked by `deny credentials` |
-| 3 | `/tmp/labspace-fs-test-3` | none | 403, no sandbox | No applicable policy → default-deny |
+| 1 | `~/workdemo/test-1` | none | Sandbox starts | Covered by `allow workdemo` |
+| 2 | `~/workdemo/test-2` | `~/.ssh:ro` | 403, no sandbox | Blocked by `deny credentials` |
+| 3 | `/tmp/outside-workdemo` | none | 403, no sandbox | No applicable policy → default-deny |
 
 Same three-decision pattern as the network demo, just at a different layer:
 

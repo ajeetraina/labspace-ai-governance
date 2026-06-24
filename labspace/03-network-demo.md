@@ -169,13 +169,13 @@ That last line is the central control proof. Even though sbx ships with sensible
 ## Step 3 - Spin up a sandbox
 
 ```bash no-run-button
-mkdir -p ~/labspace-fs-test/test-1 && cd ~/labspace-fs-test/test-1
+mkdir -p ~/workdemo/scratch && cd ~/workdemo/scratch
 sbx run shell .
 ```
 
 This creates an isolated microVM with `shell` as the agent and the current directory as the workspace. Outbound network from the sandbox goes through the proxy that enforces your org policies.
 
-We use `~/labspace-fs-test/test-1` as the workspace because Section 04 (Filesystem Enforcement Demo) allows `~/labspace-fs-test/**` - so a single filesystem rule covers both labs.
+We use `~/workdemo/scratch` as the workspace because Section 04 (Filesystem Enforcement Demo) allows `~/workdemo/**` - so a single filesystem rule covers both labs.
 
 You'll land at a shell prompt inside the sandbox.
 
@@ -186,15 +186,15 @@ You'll land at a shell prompt inside the sandbox.
 >
 > ```
 > ERROR: failed to create sandbox: ... 403 Forbidden: mount policy denied:
-> /Users/<you>/labspace-fs-test/test-1: no applicable policies for
-> op(action=fs:mount:read, resource=fs:path:/Users/<you>/labspace-fs-test/test-1)
+> /Users/<you>/workdemo/scratch: no applicable policies for
+> op(action=fs:mount:read, resource=fs:path:/Users/<you>/workdemo/scratch)
 > ```
 >
 > If you used the **API / CLI** path in Step 1 and ran `setup-policies.sh` with no argument, this rule already exists - you shouldn't hit this error. Otherwise, add the shared filesystem allow rule once - this is the **same rule** Section 04 uses, so you only define it a single time:
 >
 > - Open **[app.docker.com/accounts/$$org$$](https://app.docker.com/accounts/$$org$$)** → **AI governance → Filesystem access**
-> - Action: **Allow** · Filesystem path: `~/labspace-fs-test/**` · Action scope: **Read, Write** · Name: `allow lab test directory`
-> - Sync and verify with `sbx policy reset` (pick Balanced), then `sbx policy ls` (confirm `allow lab test directory` with `ORIGIN: remote`)
+> - Action: **Allow** · Filesystem path: `~/workdemo/**` · Action scope: **Read, Write** · Name: `allow workdemo`
+> - Sync and verify with `sbx policy reset` (pick Balanced), then `sbx policy ls` (confirm `allow workdemo` with `ORIGIN: remote`)
 >
 > Then re-run `sbx run shell .`. Section 04 covers this mount-policy behavior in full.
 

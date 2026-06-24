@@ -65,7 +65,7 @@ The open-source [`docker/mcp-gateway`](https://github.com/docker/mcp-gateway) is
 Create a working directory and pull the lab's prebuilt Compose file:
 
 ```bash no-run-button
-mkdir -p ~/mcp-gateway-lab && cd ~/mcp-gateway-lab
+mkdir -p ~/workdemo/mcp-gateway-lab && cd ~/workdemo/mcp-gateway-lab
 curl -fsSL https://raw.githubusercontent.com/ajeetraina/labspace-ai-governance/main/labspace/assets/mcp-gateway-compose.yaml -o compose.yaml
 cat compose.yaml
 ```
