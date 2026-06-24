@@ -22,6 +22,12 @@ Verify sbx is installed:
 sbx version
 ```
 
+If it's not installed, then run the following command:
+
+```bash no-run-button
+brew install docker/tap/sbx@nightly
+```
+
 Verify you're logged in to Docker:
 
 ```bash no-run-button
