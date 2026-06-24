@@ -104,12 +104,20 @@ The **Docker AI Governance API** (covered end-to-end in the Governance API secti
 
 ### Get an admin token
 
-All API calls use a JWT bearer token tied to an org owner/admin. Exchange a Personal Access Token (preferred) or your password for one:
+All API calls use a JWT bearer token tied to an org owner/admin. Exchange a Personal Access Token (preferred) or your password for one.
+
+Fill in your Docker username and a Personal Access Token below - they're substituted directly into the `curl` command that follows, so you can run it without editing anything:
+
+::variableDefinition[dockerUser]{prompt="Your Docker Hub username"}
+::variableDefinition[dockerPat]{prompt="A Personal Access Token (preferred) or your password"}
+
+> [!WARNING]
+> A Personal Access Token is a secret. The value you enter stays in your browser session and is substituted into the command below - but treat the rendered command like any other credential, and use a scoped PAT rather than your password where possible.
 
 ```bash no-run-button
 curl -X POST https://hub.docker.com/v2/auth/token \
   -H "Content-Type: application/json" \
-  -d '{"username":"your-username","password":"your-pat-or-password"}'
+  -d '{"username":"$$dockerUser$$","password":"$$dockerPat$$"}'
 ```
 
 Copy the `token` from the response and export it, along with your org name:
