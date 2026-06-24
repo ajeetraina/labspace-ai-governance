@@ -79,7 +79,28 @@ If a rule exists with path `~/**` or `/**` and action Allow, **delete it**. A ca
 
 If you ran `setup-policies.sh` with **no argument** in Section 03, the filesystem policy is **already created** - jump straight to Step 2.
 
-To create it on its own, make sure `ORG` and `TOKEN` are still exported (Section 03 → Step 1 shows how to mint a token), then run the helper scoped to the filesystem domain:
+To create it on its own, make sure `ORG` and `TOKEN` are still exported. If you set up your token in Section 03, the fields below are already filled in - otherwise enter your Docker username and a Personal Access Token to mint one here:
+
+::variableDefinition[dockerUser]{prompt="Your Docker Hub username"}
+::variableDefinition[dockerPat]{prompt="A Personal Access Token (preferred) or your password"}
+
+> [!WARNING]
+> A Personal Access Token is a secret. The value you enter stays in your browser session and is substituted into the command below - but treat the rendered command like any other credential, and use a scoped PAT rather than your password where possible.
+
+```bash no-run-button
+curl -X POST https://hub.docker.com/v2/auth/token \
+  -H "Content-Type: application/json" \
+  -d '{"username":"$$dockerUser$$","password":"$$dockerPat$$"}'
+```
+
+Copy the `token` from the response and export it, along with your org name:
+
+```bash no-run-button
+export ORG=$$org$$
+export TOKEN="paste-the-jwt-here"
+```
+
+Then run the helper scoped to the filesystem domain:
 
 ```bash no-run-button
 curl -fsSL https://raw.githubusercontent.com/ajeetraina/labspace-ai-governance/main/labspace/assets/setup-policies.sh -o setup-policies.sh
