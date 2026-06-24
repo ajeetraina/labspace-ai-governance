@@ -19,7 +19,7 @@ By the end you have a defensible enforcement story you can walk a security team 
 ```bash
 git clone https://github.com/ajeetraina/labspace-ai-governance
 cd labspace-ai-governance
-bash start-labspace.sh
+CONTENT_PATH=$PWD docker compose up --watch
 ```
 
 Then visit [http://localhost3030](http://localhost:3030) in your browser.
