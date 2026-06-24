@@ -26,7 +26,7 @@ Then visit [http://localhost3030](http://localhost:3030) in your browser.
 
 ## Prerequisites
 
-- **Docker Desktop** with `sbx` (Docker Sandboxes) available on `$PATH`
+- `sbx` (Docker Sandboxes) available on `$PATH`
 - **Admin access** to a Docker Hub organization with AI Governance enabled
 - **A logged-in Docker CLI** (`docker login` with your org credentials)
 
