@@ -106,25 +106,21 @@ The **Docker AI Governance API** (covered end-to-end in the Governance API secti
 
 All API calls use a JWT bearer token tied to an org owner/admin. Exchange a Personal Access Token (preferred) or your password for one.
 
-Fill in your Docker username and a Personal Access Token below - they're substituted directly into the `curl` command that follows, so you can run it without editing anything:
-
-::variableDefinition[dockerUser]{prompt="Your Docker Hub username"}
-::variableDefinition[dockerPat]{prompt="A Personal Access Token (preferred) or your password"}
+Run this in your terminal. It prompts for your username and a Personal Access Token (the PAT is read silently, so it never appears on screen), exchanges them for a JWT, and exports it - along with your org name - for the rest of the session:
 
 > [!WARNING]
-> A Personal Access Token is a secret. The value you enter stays in your browser session and is substituted into the command below - but treat the rendered command like any other credential, and use a scoped PAT rather than your password where possible.
+> A Personal Access Token is a secret. Enter it only at the silent prompt below - prefer a scoped PAT over your account password so it can be revoked.
 
 ```bash no-run-button
-curl -X POST https://hub.docker.com/v2/auth/token \
-  -H "Content-Type: application/json" \
-  -d '{"username":"$$dockerUser$$","password":"$$dockerPat$$"}'
-```
+read -rp  "Docker Hub username: " DOCKER_USER
+read -rsp "Personal Access Token: " DOCKER_PAT; echo
 
-Copy the `token` from the response and export it, along with your org name:
-
-```bash no-run-button
 export ORG=$$org$$
-export TOKEN="paste-the-jwt-here"
+export TOKEN="$(curl -fsS -X POST https://hub.docker.com/v2/users/login \
+  -H "Content-Type: application/json" \
+  -d "{\"username\":\"$DOCKER_USER\",\"password\":\"$DOCKER_PAT\"}" | jq -r '.token')"
+
+[ -n "$TOKEN" ] && [ "$TOKEN" != "null" ] && echo "Token captured." || echo "Failed to get token - check your username/PAT."
 ```
 
 ### Run the policy setup script

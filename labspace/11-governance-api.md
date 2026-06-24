@@ -25,7 +25,7 @@ This is the API behind the buttons. Nothing new to learn about *how policy works
 All calls use a JWT bearer token. Exchange your credentials (password, Personal Access Token, or Organization Access Token) at the auth endpoint:
 
 ```bash no-run-button
-curl -X POST https://hub.docker.com/v2/auth/token \
+curl -X POST https://hub.docker.com/v2/users/login \
   -H "Content-Type: application/json" \
   -d '{
     "username": "your-username",
@@ -243,7 +243,7 @@ curl -X GET https://hub.docker.com/v2/orgs/$$org$$/governance/policies/$POLICY_I
 
 | Operation | Method & path |
 | --- | --- |
-| Get token | `POST /v2/auth/token` |
+| Get token | `POST /v2/users/login` |
 | List policies | `GET /v2/orgs/{org}/governance/policies` |
 | Create policy | `POST /v2/orgs/{org}/governance/policies` |
 | Get policy (with rules) | `GET /v2/orgs/{org}/governance/policies/{policy_id}` |
