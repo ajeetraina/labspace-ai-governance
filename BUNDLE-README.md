@@ -1,4 +1,4 @@
-# labspace-ai-governance — v5 bundle
+# labspace-ai-governance - v5 bundle
 
 Self-contained tarball of the Docker AI Governance labspace. Extract anywhere and run.
 
@@ -11,13 +11,13 @@ Self-contained tarball of the Docker AI Governance labspace. Extract anywhere an
 | `start-labspace.sh` | Brings the stack up. |
 | `stop-labspace.sh` | Brings the stack down. Idempotent. `--volumes` / `--images` / `--all` for deeper cleanup. |
 | `labspace/00-setup.md` | Pick your Docker org. Default: `whalecollab`. |
-| `labspace/01-introduction.md` | Why AI Governance — three pillars framing. |
+| `labspace/01-introduction.md` | Why AI Governance - three pillars framing. |
 | `labspace/02-the-policy-model.md` | How org policies reach developers; local vs remote. |
 | `labspace/03-network-demo.md` | Network enforcement demo. Three rules, three `curl`s, three outcomes. Includes MITM proxy explanation. |
 | `labspace/04-filesystem-demo.md` | Filesystem enforcement demo. Mount-time policy checks. |
 | `labspace/06-mcp-hands-on.md` | `sbx mcp` registration with four modes + local gateway variant. |
 | `labspace/08-observability.md` | Audit log + live dashboard. Honest about prompts / tool-call / user-attribution gaps. |
-| `labspace/05-whats-next.md` | Closing — roadmap framing for Pillar 3 SIEM/audit features. |
+| `labspace/05-whats-next.md` | Closing - roadmap framing for Pillar 3 SIEM/audit features. |
 | `labspace/assets/mcp-gateway-compose.yaml` | Reusable Compose recipe for a local `docker/mcp-gateway` with `--verbose=true`. |
 | `labspace/kits/observability/` | Go backend + single-page HTML UI that tails sbx daemon log + MCP gateway containers and streams events live to `http://localhost:8090`. |
 
@@ -42,7 +42,7 @@ open http://localhost:8090
 
 ## Prerequisites
 
-- Docker Desktop with the `sbx` CLI installed (nightly recommended for full MCP feature surface)
+- The `sbx` (Docker Sandboxes) CLI installed - Docker Desktop is not required (nightly recommended for full MCP feature surface)
 - A Docker Hub organisation with a Docker Business subscription (for the AI Governance feature)
 - Admin access to that org (to set the policies the lab tests against)
 
@@ -53,7 +53,7 @@ The lab uses `whalecollab` as the default org (set in `labspace/00-setup.md`). T
 - Click a different org name on the Setup page once the labspace UI is running, or
 - Edit `labspace/00-setup.md` and change `default="whalecollab"` to your org
 
-The Admin Console URL pattern is `https://app.docker.com/accounts/<org>` — the lab uses `$$org$$` substitution so you don't need to edit URLs.
+The Admin Console URL pattern is `https://app.docker.com/accounts/<org>` - the lab uses `$$org$$` substitution so you don't need to edit URLs.
 
 ## Reverting
 

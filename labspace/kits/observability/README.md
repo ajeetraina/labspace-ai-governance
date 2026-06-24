@@ -1,4 +1,4 @@
-# Observability Kit — sbx + MCP
+# Observability Kit - sbx + MCP
 
 A small dashboard that tails the `sbx` daemon log and your local `docker/mcp-gateway` container logs, normalises them into one event stream, and serves a live web UI on `http://localhost:8090`.
 
@@ -12,23 +12,23 @@ Useful for:
 
 Three live sources, normalised into one event stream:
 
-1. **`sbx` daemon log** (`sandboxes/sandboxd/daemon.log`, JSONL) — every `governance policy evaluation` event
+1. **`sbx` daemon log** (`sandboxes/sandboxd/daemon.log`, JSONL) - every `governance policy evaluation` event
    - Decision (allow / deny), resource (e.g. `paste.ee:443`), matched rule, deny reason (explicit / implicit), source (local / remote)
    - Sandbox/agent/session fields when sbx emits them (lifecycle events do, policy events don't yet)
-2. **`sbx` MCP log** (`sandboxes/sandboxd/mcp/mcp.log`, logfmt) — gateway lifecycle events (setup, start, errors)
-3. **`docker/mcp-gateway` container stdout** — every running gateway container, log lines classified as `call-tool` / `list-tools` / `list-resources` when patterns match
+2. **`sbx` MCP log** (`sandboxes/sandboxd/mcp/mcp.log`, logfmt) - gateway lifecycle events (setup, start, errors)
+3. **`docker/mcp-gateway` container stdout** - every running gateway container, log lines classified as `call-tool` / `list-tools` / `list-resources` when patterns match
 
 Plus:
 
 - **Synthesised user identity** stamped on every event from `$USER` / `$LABSPACE_USER`. Visible in the header and in the new User column.
-- **MCP server destination detection** — events targeting `mcp.*`, `mcp-*`, `registry.modelcontextprotocol.io` get a purple dot in the table and surface in the "MCP servers reached" panel.
-- **MCP-only view** — one-click filter to hide non-MCP events.
+- **MCP server destination detection** - events targeting `mcp.*`, `mcp-*`, `registry.modelcontextprotocol.io` get a purple dot in the table and surface in the "MCP servers reached" panel.
+- **MCP-only view** - one-click filter to hide non-MCP events.
 
 ## What it deliberately doesn't show
 
-- **Native user identity.** As of sbx v0.32.0, audit events still don't carry user identity. The user shown is synthesised from the host `$USER` — accurate for single-developer machines, useless for multi-tenant. Docker's marketing promises native user identity in audit events; when it lands we'll consume it automatically (the field name is just `user` or `user_email` — we already pass `Raw` through, so it'll surface).
+- **Native user identity.** As of sbx v0.32.0, audit events still don't carry user identity. The user shown is synthesised from the host `$USER` - accurate for single-developer machines, useless for multi-tenant. Docker's marketing promises native user identity in audit events; when it lands we'll consume it automatically (the field name is just `user` or `user_email` - we already pass `Raw` through, so it'll surface).
 - **Prompts or tool-call payloads.** The sbx proxy does MITM TLS interception so it *could* log request bodies, but doesn't. Only network metadata is captured. Almost certainly a deliberate privacy default.
-- **Per-tool audit for hosted MCP servers.** A call from your agent to a Notion MCP tool shows up only as a TCP connect to `mcp.notion.com:443` — you can see *that* the server was reached, not *which tool* was invoked or *what arguments* were passed. This requires upstream changes to the gateway and/or sbx.
+- **Per-tool audit for hosted MCP servers.** A call from your agent to a Notion MCP tool shows up only as a TCP connect to `mcp.notion.com:443` - you can see *that* the server was reached, not *which tool* was invoked or *what arguments* were passed. This requires upstream changes to the gateway and/or sbx.
 - **Cross-machine aggregation.** This is per-host. For org-wide audit, forward the JSONL daemon log to a SIEM.
 
 ## Quick start
@@ -77,13 +77,13 @@ The host path differs from macOS. Edit `compose.yaml` and replace the volume lin
 
 ### Running the MCP gateway alongside
 
-Variant B in Section 06 of the lab spins up a local `docker/mcp-gateway` on port 8811. Run that gateway in the **same compose project** (or any project — this dashboard discovers gateway containers by image name across all Docker contexts) and its logs will appear in the dashboard automatically.
+Variant B in Section 06 of the lab spins up a local `docker/mcp-gateway` on port 8811. Run that gateway in the **same compose project** (or any project - this dashboard discovers gateway containers by image name across all Docker contexts) and its logs will appear in the dashboard automatically.
 
 ## API
 
-- `GET /api/events` — JSON array of recent events (last 1000)
-- `GET /api/ws` — WebSocket stream of new events as they arrive
-- `GET /api/health` — `ok`
+- `GET /api/events` - JSON array of recent events (last 1000)
+- `GET /api/ws` - WebSocket stream of new events as they arrive
+- `GET /api/health` - `ok`
 
 ## What about prompts and tool calls?
 
@@ -91,9 +91,9 @@ This is the first question every reviewer asks, so it deserves a direct answer.
 
 ### Prompts (the actual text the user typed at the agent)
 
-**Not logged.** The sbx network proxy does MITM TLS interception, so it *could* technically read request bodies — but it doesn't. The daemon log captures destination, port, decision, and matched rule. Nothing about request content.
+**Not logged.** The sbx network proxy does MITM TLS interception, so it *could* technically read request bodies - but it doesn't. The daemon log captures destination, port, decision, and matched rule. Nothing about request content.
 
-This is almost certainly a deliberate product choice. Logging prompt content has serious privacy and legal implications, and security teams have very different stances on whether content inspection is acceptable. The cautious default — metadata yes, bodies no — is what ships today.
+This is almost certainly a deliberate product choice. Logging prompt content has serious privacy and legal implications, and security teams have very different stances on whether content inspection is acceptable. The cautious default - metadata yes, bodies no - is what ships today.
 
 ### MCP tool calls
 
@@ -109,7 +109,7 @@ To actually get structured tool-call audit, the upstream `docker/mcp-gateway` wo
 
 ### Who triggered each event
 
-**Not captured.** The sbx daemon log has no `user`, `sandbox_id`, or `agent` field — only the operation and decision. On a single-developer machine this is fine; for org-wide audit you'd need either:
+**Not captured.** The sbx daemon log has no `user`, `sandbox_id`, or `agent` field - only the operation and decision. On a single-developer machine this is fine; for org-wide audit you'd need either:
 
 - sbx to enrich each event with `user_email` from the Docker login session (no API change needed; just a feature request), or
 - A separate identity stream correlated with these events at SIEM ingest time
@@ -124,7 +124,7 @@ To actually get structured tool-call audit, the upstream `docker/mcp-gateway` wo
 - ❌ Does not show user identity
 - ❌ Does not aggregate across machines
 
-If a security review needs (3), (4), or (5), the honest answer today is "roadmap" — and the dashboard makes that gap visible rather than hiding it.
+If a security review needs (3), (4), or (5), the honest answer today is "roadmap" - and the dashboard makes that gap visible rather than hiding it.
 
 ## Caveats
 

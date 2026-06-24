@@ -2,14 +2,14 @@
 
 Section 08 looked at the raw `daemon.log` and was honest about its limits: it answered *what* was decided, but it had **no user identity, no org, no session correlation**. We noted user attribution was on the roadmap.
 
-That roadmap item shipped. Docker AI Governance now writes a separate, purpose-built **audit log** through a component called `auditkit` — structured JSON Lines, one event per policy decision, **with the signed-in user, the org, and a session ID on every record**. This section is the SIEM-grade surface the security team actually asked for.
+That roadmap item shipped. Docker AI Governance now writes a separate, purpose-built **audit log** through a component called `auditkit` - structured JSON Lines, one event per policy decision, **with the signed-in user, the org, and a session ID on every record**. This section is the SIEM-grade surface the security team actually asked for.
 
-> ⚠️ **Paid feature.** Audit logging is part of Docker AI Governance (a separate paid subscription) and **only activates when `$$org$$` enforces a centralized governance policy**. With no governance applied, no audit records are written. Confirm governance is live first with `sbx policy ls` — look for the `Governance: managed by $$org$$` header from Section 02.
+> ⚠️ **Paid feature.** Audit logging is part of Docker AI Governance (a separate paid subscription) and **only activates when `$$org$$` enforces a centralized governance policy**. With no governance applied, no audit records are written. Confirm governance is live first with `sbx policy ls` - look for the `Governance: managed by $$org$$` header from Section 02.
 
 **Time:** ~10 minutes
 **Prerequisites:** Governance is enforced for `$$org$$`, and you've run the Section 03 enforcement tests so there are decisions to inspect.
 
-## Step 1 — Confirm governance is active
+## Step 1 - Confirm governance is active
 
 Audit records only exist when governance is on:
 
@@ -17,9 +17,9 @@ Audit records only exist when governance is on:
 sbx policy ls
 ```
 
-If you don't see `Governance: managed by $$org$$` at the top, audit logging isn't running — go back to Section 03 and enforce a policy first.
+If you don't see `Governance: managed by $$org$$` at the top, audit logging isn't running - go back to Section 03 and enforce a policy first.
 
-## Step 2 — Find the audit directory
+## Step 2 - Find the audit directory
 
 Unlike `daemon.log` (under `Application Support`), audit records live under a dedicated `auditkit` directory that varies by OS:
 
@@ -38,9 +38,9 @@ ls -lh "$AUDIT_DIR"
 
 Files are named `audit-<utc-timestamp>-<process-uuid>-<seq>.jsonl`.
 
-> **Only read sealed `.jsonl` files.** The daemon writes the active file as `.tmp`, then atomically renames it to `.jsonl` when it seals. **Exclude `.tmp` files** from any inspection or collection — they're incomplete. Sealing happens at a rotation threshold (by default 5 minutes, 1000 events, or 50 MiB — whichever comes first) or on daemon shutdown.
+> **Only read sealed `.jsonl` files.** The daemon writes the active file as `.tmp`, then atomically renames it to `.jsonl` when it seals. **Exclude `.tmp` files** from any inspection or collection - they're incomplete. Sealing happens at a rotation threshold (by default 5 minutes, 1000 events, or 50 MiB - whichever comes first) or on daemon shutdown.
 
-## Step 3 — Read a record
+## Step 3 - Read a record
 
 Each line is one self-contained JSON event. Here's a complete network **deny** record:
 
@@ -80,9 +80,9 @@ Compare this to the `daemon.log` event from Section 08. The fields Section 08 sa
 
 This is the honest update to Section 08's roadmap table: **user attribution shipped.**
 
-## Step 4 — Query it with `jq`
+## Step 4 - Query it with `jq`
 
-The records are JSONL, so the same `jq` patterns from Section 08 apply — just pointed at the audit directory and using the new field names:
+The records are JSONL, so the same `jq` patterns from Section 08 apply - just pointed at the audit directory and using the new field names:
 
 ```bash no-run-button
 AUDIT_DIR="$HOME/Library/Logs/com.docker.sandboxes/sandboxes/auditkit"
@@ -107,23 +107,23 @@ cat "$AUDIT_DIR"/*.jsonl 2>/dev/null \
 | --- | --- |
 | `audit_event_id` | Unique ID for this event |
 | `timestamp` | UTC time of the decision |
-| `schema_version` | Record schema version — a stable contract for your SIEM parsers |
+| `schema_version` | Record schema version - a stable contract for your SIEM parsers |
 | `category` | `AUDIT_CATEGORY_EVALUATION` (a policy decision) or `AUDIT_CATEGORY_MANAGEMENT` (session lifecycle) |
 | `decision` | `AUDIT_DECISION_ALLOW` or `AUDIT_DECISION_DENY` |
 | `username` / `user_email` | The signed-in Docker user |
 | `org_id` / `org_name` | The organization whose policy applied |
 | `audit_session_id` | Identifies the daemon run; every evaluation record carries the matching session's ID |
 | `action_type` | The kind of access, e.g. `network_egress` |
-| `resource_id` | The evaluation target — host and port (or path) |
+| `resource_id` | The evaluation target - host and port (or path) |
 | `deny_reason` | Array explaining a denial |
 | `os` / `app_version` / `client_name` / `hostname` | Environment context for the machine that made the decision |
 
 ### Two categories of record
 
-- **Evaluation records** (`AUDIT_CATEGORY_EVALUATION`) — one per policy decision: the resource, the action, the verdict, and the deny reason. These are what you'll query most.
-- **Session lifecycle records** (`AUDIT_CATEGORY_MANAGEMENT`) — mark daemon start/stop. Every evaluation record shares the `audit_session_id` of the management record that opened its session, so you can correlate decisions back to a specific daemon run.
+- **Evaluation records** (`AUDIT_CATEGORY_EVALUATION`) - one per policy decision: the resource, the action, the verdict, and the deny reason. These are what you'll query most.
+- **Session lifecycle records** (`AUDIT_CATEGORY_MANAGEMENT`) - mark daemon start/stop. Every evaluation record shares the `audit_session_id` of the management record that opened its session, so you can correlate decisions back to a specific daemon run.
 
-## Step 5 — Ship it to your SIEM
+## Step 5 - Ship it to your SIEM
 
 This is the whole point: the directory is designed to be tailed by a standard log shipper. Point any of these at the `auditkit` directory:
 
@@ -133,13 +133,13 @@ This is the whole point: the directory is designed to be tailed by a standard lo
 
 Two operational rules to bake into the shipper config:
 
-1. **Only collect `*.jsonl`** — exclude `*.tmp` so you never ingest a half-written file.
-2. **Retention is your responsibility.** The daemon rotates and seals files but does not delete them on a retention schedule for you — your log shipper or housekeeping process owns retention. Records stay on the originating machine until something collects them.
+1. **Only collect `*.jsonl`** - exclude `*.tmp` so you never ingest a half-written file.
+2. **Retention is your responsibility.** The daemon rotates and seals files but does not delete them on a retention schedule for you - your log shipper or housekeeping process owns retention. Records stay on the originating machine until something collects them.
 
 ## What you just demonstrated
 
 - A dedicated, SIEM-ready audit surface (`auditkit`) exists separately from the raw `daemon.log`
-- Every decision now carries **user, org, and session** attribution — closing the biggest honesty gap from Section 08
+- Every decision now carries **user, org, and session** attribution - closing the biggest honesty gap from Section 08
 - The `.tmp` → `.jsonl` seal-and-rename pattern means safe collection is just "grab the `.jsonl` files"
 - Standard forwarders turn this into org-wide, cross-machine audit once aggregated in your SIEM
 
