@@ -112,8 +112,10 @@ Run this in your terminal to mint a token and export it for the session:
 > A Personal Access Token is a secret. Enter it only at the silent prompt below - prefer a scoped PAT over your account password so it can be revoked.
 
 ```bash no-run-button
-read -rp  "Docker Hub username: " DOCKER_USER
-read -rsp "Personal Access Token: " DOCKER_PAT; echo
+printf "Docker Hub username: "
+read -r DOCKER_USER
+printf "Personal Access Token: "
+stty -echo; read -r DOCKER_PAT; stty echo; printf "\n"
 
 RESPONSE="$(curl -fsS -X POST https://hub.docker.com/v2/users/login \
   -H "Content-Type: application/json" \
