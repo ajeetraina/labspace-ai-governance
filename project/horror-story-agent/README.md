@@ -1,13 +1,13 @@
 # Horror Story Agent
 
-A **read-only inventory script** that demonstrates what an AI coding agent with default permissions on a developer's machine could access — without actually exfiltrating or transmitting anything.
+A **read-only inventory script** that demonstrates what an AI coding agent with default permissions on a developer's machine could access - without actually exfiltrating or transmitting anything.
 
 Used in **Lab 1**.
 
 ## What it does
 
-- Lists which secret stores exist on the machine (SSH keys, AWS creds, kubeconfig, .env files, browser cookies, git credentials, etc.) — **never reads their contents**.
-- Tests TCP reachability to common exfiltration destinations (Slack webhooks, Discord, pastebin, GitHub) — **never sends data**.
+- Lists which secret stores exist on the machine (SSH keys, AWS creds, kubeconfig, .env files, browser cookies, git credentials, etc.) - **never reads their contents**.
+- Tests TCP reachability to common exfiltration destinations (Slack webhooks, Discord, pastebin, GitHub) - **never sends data**.
 
 ## What it does NOT do
 
@@ -33,4 +33,4 @@ bash inventory.sh
 bash inventory.sh --cleanup
 ```
 
-(The script writes nothing, so cleanup is a no-op — but the flag is there for parity with destructive demo scripts.)
+(The script writes nothing, so cleanup is a no-op - but the flag is there for parity with destructive demo scripts.)

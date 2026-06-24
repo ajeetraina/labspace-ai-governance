@@ -8,7 +8,7 @@ A hands-on lab that proves how Docker AI Governance policies flow from one Admin
 
 - Policies set in `app.docker.com/admin/orgs/<your-org>` flow automatically to any developer logged in with org credentials
 - Network rules are enforced by an in-proxy `403` at request time
-- Filesystem rules are enforced at sandbox creation time — denied mounts cause `sbx run` to fail before the agent ever runs
+- Filesystem rules are enforced at sandbox creation time - denied mounts cause `sbx run` to fail before the agent ever runs
 - The default-deny posture catches anything not covered by an allow rule
 - Developers cannot override `ORIGIN: remote` policies locally
 
@@ -26,11 +26,11 @@ Then visit [http://localhost3030](http://localhost:3030) in your browser.
 
 ## Prerequisites
 
-- `sbx` (Docker Sandboxes) available on `$PATH`
+- **`sbx` (Docker Sandboxes)** installed and available on `$PATH` - Docker Desktop is not required
 - **Admin access** to a Docker Hub organization with AI Governance enabled
 - **A logged-in Docker CLI** (`docker login` with your org credentials)
 
-If you don't have an organization yet, you can still walk through Sections 00-02 conceptually — the demo sections (03, 04) need org-level admin access to add policy rules.
+If you don't have an organization yet, you can still walk through Sections 00-02 conceptually - the demo sections (03, 04) need org-level admin access to add policy rules.
 
 ## Lab structure
 

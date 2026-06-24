@@ -10,9 +10,9 @@ Enter your own Docker Hub organization name in the field above. Every `$$org$$` 
 
 ## What you need
 
-- `sbx` installed
+- **`sbx` (Docker Sandboxes)** installed - Docker Desktop is **not** required
 - **Admin access** to a Docker Hub organization so you can configure AI governance policies
-- **A terminal** in the right-hand panel — most commands are click-to-run
+- **A terminal** in the right-hand panel - most commands are click-to-run
 
 ## Quick check
 
@@ -34,6 +34,6 @@ Verify you're logged in to Docker:
 docker login
 ```
 
-If you're a member of multiple organizations, make sure the org you set above (`$$org$$`) matches one where you have admin rights — otherwise you won't be able to set policies in Section 03.
+If you're a member of multiple organizations, make sure the org you set above (`$$org$$`) matches one where you have admin rights - otherwise you won't be able to set policies in Section 03.
 
 When you're ready, move to Section 01.

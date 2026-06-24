@@ -15,7 +15,7 @@ Only org admins can modify policies. Developers cannot override them locally. Th
 When a developer runs `docker login` with org credentials, the Docker client fetches the org's AI governance policies as part of authentication. The local `sbx` daemon caches them and applies them to every sandbox launched on that machine.
 
 ```
-Admin Console  ──auth flow──▶  Developer Docker Desktop  ──cache──▶  Every sandbox
+Admin Console  ──auth flow──▶  Developer machine (sbx daemon)  ──cache──▶  Every sandbox
 (one source                                              
  of truth)
 ```
@@ -40,7 +40,7 @@ This means:
 
 - **Explicit deny always wins.** Adding a deny rule for `paste.ee` blocks paste.ee even when a broader allow rule exists.
 - **Default-deny posture** means you don't need to enumerate every bad destination. If you didn't explicitly allow it, it's blocked.
-- **A `0.0.0.0/0` catch-all allow rule defeats this model** — it permits everything. We'll remove it in the next section if it's present.
+- **A `0.0.0.0/0` catch-all allow rule defeats this model** - it permits everything. We'll remove it in the next section if it's present.
 
 ## Local vs remote policies
 
@@ -57,7 +57,7 @@ You'll see two kinds of policies:
 | `local` | Defaults shipped with sbx, or rules you added with `sbx policy allow ...` |
 | `remote` | Pulled from your org's Admin Console |
 
-When the org has policies set for a rule type (e.g., network), local rules of that type go **inactive** — you'll see `corporate policy takes precedence and does not delegate this rule type to local policy`.
+When the org has policies set for a rule type (e.g., network), local rules of that type go **inactive** - you'll see `corporate policy takes precedence and does not delegate this rule type to local policy`.
 
 The CISO has the wheel.
 
