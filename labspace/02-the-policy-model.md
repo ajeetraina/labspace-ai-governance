@@ -4,11 +4,14 @@ Before you run the live demo, here's the mental model.
 
 ## Where policies live
 
-Policies for `$$org$$` are defined in one place:
+Policies for `$$org$$` live in one place - the org's control plane - but there are **two ways to author them**:
 
-**[app.docker.com/accounts/$$org$$](https://app.docker.com/accounts/$$org$$)** → AI governance
+1. **Docker Hub Admin Console (UI)** - point and click at **[app.docker.com/accounts/$$org$$](https://app.docker.com/accounts/$$org$$)** → **AI governance**. Best for a human making a one-off change.
+2. **Docker AI Governance API** - the same control plane driven programmatically over HTTP. Best for codifying governance: version control, CI pipelines, and admin tooling. We cover it in the **Governance API** section.
 
-Only org admins can modify policies. Developers cannot override them locally. That's the point.
+Both paths read and write the **same policies**, **same rules**, **same org** - they're just two front doors to one source of truth. This section and the demos use the Admin Console; everything you do here can be reproduced through the API.
+
+Only org admins can modify policies, whichever path they use. Developers cannot override them locally. That's the point.
 
 ## How policies reach developers
 
