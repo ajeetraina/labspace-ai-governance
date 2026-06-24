@@ -106,7 +106,7 @@ The **Docker AI Governance API** (covered end-to-end in the Governance API secti
 
 All API calls use a JWT bearer token tied to an org owner/admin. Exchange a Personal Access Token (preferred) or your password for one.
 
-Run this in your terminal. It prompts for your username and a Personal Access Token (the PAT is read silently, so it never appears on screen), exchanges them for a JWT, and exports it - along with your org name - for the rest of the session:
+Run this in your terminal to mint a token and export it for the session:
 
 > [!WARNING]
 > A Personal Access Token is a secret. Enter it only at the silent prompt below - prefer a scoped PAT over your account password so it can be revoked.
