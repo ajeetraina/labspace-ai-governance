@@ -79,25 +79,27 @@ If a rule exists with path `~/**` or `/**` and action Allow, **delete it**. A ca
 
 If you ran `setup-policies.sh` with **no argument** in Section 03, the filesystem policy is **already created** - jump straight to Step 2.
 
-To create it on its own, make sure `ORG` and `TOKEN` are still exported. If you set up your token in Section 03, the fields below are already filled in - otherwise enter your Docker username and a Personal Access Token to mint one here:
-
-::variableDefinition[dockerUser]{prompt="Your Docker Hub username"}
-::variableDefinition[dockerPat]{prompt="A Personal Access Token (preferred) or your password"}
+To create it on its own, make sure `ORG` and `TOKEN` are still exported. If you set up your token in Section 03, they already are - otherwise run this to mint one (the PAT is read silently, so it never appears on screen):
 
 > [!WARNING]
-> A Personal Access Token is a secret. The value you enter stays in your browser session and is substituted into the command below - but treat the rendered command like any other credential, and use a scoped PAT rather than your password where possible.
+> A Personal Access Token is a secret. Enter it only at the silent prompt below - prefer a scoped PAT over your account password so it can be revoked.
 
 ```bash no-run-button
-curl -X POST https://hub.docker.com/v2/auth/token \
+read -rp  "Docker Hub username: " DOCKER_USER
+read -rsp "Personal Access Token: " DOCKER_PAT; echo
+
+RESPONSE="$(curl -fsS -X POST https://hub.docker.com/v2/users/login \
   -H "Content-Type: application/json" \
-  -d '{"username":"$$dockerUser$$","password":"$$dockerPat$$"}'
-```
+  -d "{\"username\":\"$DOCKER_USER\",\"password\":\"$DOCKER_PAT\"}")"
 
-Copy the `token` from the response and export it, along with your org name:
-
-```bash no-run-button
 export ORG=$$org$$
-export TOKEN="paste-the-jwt-here"
+if command -v jq >/dev/null 2>&1; then
+  export TOKEN="$(printf '%s' "$RESPONSE" | jq -r '.token')"
+else
+  export TOKEN="$(printf '%s' "$RESPONSE" | grep -o '"token":"[^"]*"' | sed 's/.*:"//;s/"$//')"
+fi
+
+[ -n "$TOKEN" ] && [ "$TOKEN" != "null" ] && echo "Token captured." || echo "Failed to get token - check your username/PAT."
 ```
 
 Then run the helper scoped to the filesystem domain:
