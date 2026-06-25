@@ -31,19 +31,33 @@ This labspace supports two methods for authoring and applying AI Governance poli
 docker labspace launch ajeetraina777/labspace-ai-governance
 ```
 
+> **Note on the terminal:** This lab teaches `sbx`, which must run on your
+> **host** (not inside a container). The IDE terminal is therefore served by
+> the **Labspace Compose provider** (`workspace.provider.type: labspace` in
+> `compose.override.yaml`), which starts a host-side `ttyd` on `:8085`. This
+> provider is rolling out with the Labspace tooling — if `docker labspace
+> launch` errors on `provider.type: labspace`, your build doesn't ship it yet;
+> use `bash start-labspace.sh` (below) until it lands.
+
 ### Running it locally
 
 ```bash
 git clone https://github.com/ajeetraina/labspace-ai-governance
 cd labspace-ai-governance
+
+# Option A — checks prerequisites, then brings up the stack
+bash start-labspace.sh
+
+# Option B — content-dev mode (auto-syncs your edits)
 CONTENT_PATH=$PWD docker compose up --watch
 ```
 
-Then visit [http://localhost3030](http://localhost:3030) in your browser.
+Then visit [http://localhost:3030](http://localhost:3030) in your browser.
 
 ## Prerequisites
 
 - **`sbx` (Docker Sandboxes)** installed and available on `$PATH` - Docker Desktop is not required
+- **`ttyd`** installed on `$PATH` (`brew install ttyd` / `sudo apt install ttyd`) - the labspace provider uses it to serve the host terminal
 - **Admin access** to a Docker Hub organization with AI Governance enabled
 - **A logged-in Docker CLI** (`docker login` with your org credentials)
 
