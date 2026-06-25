@@ -1,5 +1,13 @@
 #!/bin/bash
-# start-labspace.sh - Launch the sbx Labspace
+# start-labspace.sh - Launch the sbx Labspace locally (content-dev mode)
+#
+# The IDE terminal is served by the Labspace Compose provider
+# (workspace.provider.type: labspace in compose.override.yaml), which starts
+# a host-side ttyd on :8085 automatically. This script no longer starts ttyd
+# by hand — it only checks prerequisites and brings up the compose stack.
+#
+# To launch the *published* labspace instead, use:
+#   docker labspace launch ajeetraina777/labspace-ai-governance
 #
 # Prerequisites (automatically checked on startup):
 #
@@ -18,8 +26,6 @@
 
 set -e
 
-TTYD_PORT=8085        # primary terminal (the "IDE" tab in the interface)
-TTYD_PORT2=8087       # second terminal (the "Terminal 2" service tab)
 COMPOSE_FILE="compose.override.yaml"
 
 # ── Color helpers ──────────────────────────────────────────────
@@ -28,16 +34,17 @@ info()  { echo -e "${GREEN}==>${NC} $*"; }
 warn()  { echo -e "${YELLOW}WARN:${NC} $*"; }
 error() { echo -e "${RED}ERROR:${NC} $*"; exit 1; }
 
-# ── 1. Check ttyd ──────────────────────────────────────────────
+# ── 1. Check ttyd (the labspace provider runs host ttyd on :8085) ──
 if ! command -v ttyd &>/dev/null; then
   echo ""
   echo -e "${RED}ERROR: ttyd not found.${NC}"
   echo ""
+  echo "  The labspace provider serves the IDE terminal with host ttyd."
   echo "  Install it with:"
   echo "    brew install ttyd          # macOS"
   echo "    sudo apt install ttyd      # Ubuntu/Debian"
   echo ""
-  echo "  Then re-run: bash start.sh"
+  echo "  Then re-run: bash start-labspace.sh"
   exit 1
 fi
 
@@ -52,7 +59,7 @@ if ! command -v sbx &>/dev/null; then
   echo ""
   echo "  Or check: https://docs.docker.com/go/sbx/"
   echo ""
-  echo "  Then re-run: bash start.sh"
+  echo "  Then re-run: bash start-labspace.sh"
   exit 1
 fi
 
@@ -71,34 +78,9 @@ if [ ! -f "$COMPOSE_FILE" ]; then
   error "$COMPOSE_FILE not found. Are you running from the repo root?"
 fi
 
-# ── 5. Clear ports ─────────────────────────────────────────────
-info "Clearing ports $TTYD_PORT and $TTYD_PORT2..."
-lsof -ti tcp:$TTYD_PORT  | xargs kill -9 2>/dev/null || true
-lsof -ti tcp:$TTYD_PORT2 | xargs kill -9 2>/dev/null || true
-sleep 1
-
-# ── 6. Start ttyd terminals ────────────────────────────────────
-# Two independent host shells. The interface embeds :8085 as the default
-# "IDE" tab and :8087 as the "Terminal 2" service tab (see labspace.yaml).
-info "Starting terminal 1 on port $TTYD_PORT..."
-ttyd -p $TTYD_PORT --writable --max-clients 4 zsh &
-TTYD_PID=$!
-
-info "Starting terminal 2 on port $TTYD_PORT2..."
-ttyd -p $TTYD_PORT2 --writable --max-clients 4 zsh &
-TTYD_PID2=$!
-sleep 1
-
-if ! lsof -ti tcp:$TTYD_PORT &>/dev/null; then
-  error "ttyd failed to start on port $TTYD_PORT"
-fi
-if ! lsof -ti tcp:$TTYD_PORT2 &>/dev/null; then
-  error "ttyd failed to start on port $TTYD_PORT2"
-fi
-info "ttyd PIDs: $TTYD_PID (term1), $TTYD_PID2 (term2)"
-
-# ── 7. Start Labspace (use local compose file if present, ───────
-#       otherwise fall back to OCI reference)  ──────────────────
+# ── 6. Start Labspace (use local base compose if present, ───────
+#       otherwise fall back to the OCI reference). The workspace
+#       provider starts host ttyd on :8085 for the IDE tab. ──────
 if [ -f "docker-compose.yml" ]; then
   BASE_COMPOSE="docker-compose.yml"
 elif [ -f "compose.yaml" ]; then
@@ -111,16 +93,10 @@ fi
 
 if [ -n "$BASE_COMPOSE" ]; then
   info "Starting Labspace (local compose: $BASE_COMPOSE)..."
-  docker compose \
-    -f "$BASE_COMPOSE" \
-    -f "$COMPOSE_FILE" \
-    up &
+  docker compose -f "$BASE_COMPOSE" up --watch &
 else
   info "Starting Labspace (OCI reference)..."
-  docker compose \
-    -f oci://dockersamples/labspace \
-    -f "$COMPOSE_FILE" \
-    up &
+  docker compose -f oci://dockersamples/labspace -f "$COMPOSE_FILE" up --watch &
 fi
 COMPOSE_PID=$!
 
@@ -129,28 +105,20 @@ echo "==========================================="
 echo "  Labspace ready at http://localhost:3030"
 echo "  Observability dashboard: http://localhost:8090"
 echo "    (also the 'Observability' tab + Section 08)"
-echo "  Terminal 1 (IDE tab):    http://localhost:8085"
-echo "  Terminal 2 tab:          http://localhost:8087"
+echo "  IDE terminal (provider):  http://localhost:8085"
 echo "  Run: sbx ls, sbx version, sbx run ..."
 echo "==========================================="
 echo ""
 echo "Press Ctrl+C to stop"
 
-# ── 8. Cleanup on exit ─────────────────────────────────────────
+# ── 7. Cleanup on exit ─────────────────────────────────────────
 cleanup() {
   echo ""
   info "Stopping..."
-  kill $TTYD_PID $TTYD_PID2 2>/dev/null || true
   if [ -n "$BASE_COMPOSE" ]; then
-    docker compose \
-      -f "$BASE_COMPOSE" \
-      -f "$COMPOSE_FILE" \
-      down 2>/dev/null || true
+    docker compose -f "$BASE_COMPOSE" down 2>/dev/null || true
   else
-    docker compose \
-      -f oci://dockersamples/labspace \
-      -f "$COMPOSE_FILE" \
-      down 2>/dev/null || true
+    docker compose -f oci://dockersamples/labspace -f "$COMPOSE_FILE" down 2>/dev/null || true
   fi
 }
 trap cleanup EXIT
