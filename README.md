@@ -39,6 +39,62 @@ docker labspace launch ajeetraina777/labspace-ai-governance
 > Labspace tooling — if `docker labspace launch` errors on
 > `provider.type: labspace`, your build doesn't ship it yet.
 
+#### Troubleshooting the launch
+
+**`Docker socket mount denied ... image is not in the allowed list`**
+(`mikesir87/docker-socket-proxy`) — Docker Desktop's **Enhanced Container
+Isolation (ECI)** is blocking the socket proxy the Labspace framework uses.
+This is common on company-managed Docker installs, where ECI is enforced by
+admin policy. Fix it one of two ways:
+
+- **Allow-list the image (preferred on managed machines):** add
+  `mikesir87/docker-socket-proxy` to the ECI Docker-socket image list in
+  `admin-settings.json` (under
+  `enhancedContainerIsolation.dockerSocketMount.imageList`). This is set by
+  a Docker Desktop admin and survives policy syncs. There is no GUI field for
+  this list — it lives in `admin-settings.json` only.
+- **Disable ECI:** Docker Desktop → **Settings → General** → uncheck
+  **Use Enhanced Container Isolation**. Quick, but may be locked or reverted
+  by your org's policy.
+
+The allow-list block in `admin-settings.json` looks like this (merge the
+`images` entry into any existing `enhancedContainerIsolation` block rather
+than overwriting the file):
+
+```json
+{
+  "configurationFileVersion": 2,
+  "enhancedContainerIsolation": {
+    "value": true,
+    "dockerSocketMount": {
+      "imageList": {
+        "images": ["docker.io/mikesir87/docker-socket-proxy:*"]
+      }
+    }
+  }
+}
+```
+
+`admin-settings.json` lives at `C:\ProgramData\DockerDesktop\admin-settings.json`
+(Windows), `/Library/Application Support/com.docker.docker/admin-settings.json`
+(macOS), or `/usr/share/docker-desktop/admin-settings.json` (Linux). It is read
+**only at Docker Desktop startup**, so fully quit and relaunch after editing.
+
+> **Caveat for company-managed laptops:** on a managed Docker Desktop,
+> `admin-settings.json` is usually **pushed centrally** via the org's Settings
+> Management, so local edits get overwritten on the next sync (and you may not
+> have write access to the file at all). In that case the allow-list must be
+> added by whoever administers Docker Desktop for your org — through
+> **Admin Console → Docker Desktop → Settings Management**, which distributes
+> the `admin-settings.json` to all managed devices. That's the durable,
+> fleet-wide fix; disabling ECI locally only works if org policy permits it.
+
+**`failed to connect to the docker API at ... dockerDesktopLinuxEngine ...
+The system cannot find the file specified`** — Docker Desktop's Linux engine
+isn't running. Start Docker Desktop (and on Windows, ensure it's in
+**Linux containers** mode, not Windows containers), then confirm with
+`docker version` showing a **Server** section before retrying.
+
 ### Running it locally
 
 ```bash
