@@ -18,7 +18,7 @@ That's AI governance.
 Docker AI Governance gives you three layers of control, defined once in the Admin Console and enforced everywhere agents run.
 
 ### 1. Sandbox policies
-Network allowlists, filesystem mount rules, resource limits. Enforced at the proxy and mount layer. The agent never sees data or destinations it isn't allowed to touch.
+Network allowlists, filesystem mount rules, resource limits. Enforced at the proxy and mount layer. The agent never sees data or destinations it isn't allowed to touch. The same sandbox boundary also isolates **credentials** - the real API keys and tokens the agent uses stay on the host and are injected per request, so the agent never holds a live secret.
 
 ### 2. MCP tool governance
 Which MCP servers and tools your org's agents can use. Defined centrally, enforced for every developer, audited.
@@ -33,7 +33,8 @@ Every policy decision generates a structured event with user identity, timestamp
 | 02 - The Policy Model | Understand how org policies flow to developer machines |
 | 03 - Network Enforcement Demo | Prove network policies enforce with three `curl`s |
 | 04 - Filesystem Enforcement Demo | Prove filesystem policies enforce on a credentials directory |
-| 05 - What's Next | Preview audit trails and MCP governance |
+| Credential Isolation | Prove the real API keys never enter the sandbox |
+| What's Next | Preview audit trails and MCP governance |
 
 The lab focuses on **Pillar 1 (sandbox policies)** because that's what's broadly available today and what you can prove enforces in a 20-minute demo. Pillars 2 and 3 are previewed in Section 05.
 
