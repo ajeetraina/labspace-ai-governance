@@ -248,6 +248,6 @@ Writes go to the explicit workspace (the mount that got `fs:mount:write`). When 
 No. Local sbx options can adjust convenience flags but can't bypass `ORIGIN: remote` policies. Once the org sets filesystem rules, they're authoritative.
 
 **"How does this interact with the Network rules from Section 03?"**
-Both run through the same policy engine. Filesystem ops hit `fs:mount:*` checks; network calls hit network checks. Both share the audit trail covered in Section 05.
+Both run through the same policy engine. Filesystem ops hit `fs:mount:*` checks; network calls hit network checks. Both share the audit trail covered later in the lab.
 
-Move on to Section 05 for a preview of audit trails and MCP governance.
+You've now blocked the agent from reading secrets off disk. Next, **Credential Isolation** shows how the agent uses the secrets it *is* allowed to - API keys, tokens, SSH - without the real values ever entering the sandbox.

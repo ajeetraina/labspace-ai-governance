@@ -64,6 +64,9 @@ When the org has policies set for a rule type (e.g., network), local rules of th
 
 The CISO has the wheel.
 
+> [!NOTE]
+> **Not everything the sandbox enforces is an org policy.** Network and filesystem rules flow from the admin as shown above. **Credential isolation** - keeping real API keys and tokens out of the sandbox - is a sandbox runtime protection you configure **developer-side** (`sbx secret`, the OS keychain, OAuth). It complements these policies rather than being one of them. The dedicated **Credential Isolation** section covers it.
+
 ## Confirm governance is active
 
 Look at the top of the `sbx policy ls` output. You should see:
