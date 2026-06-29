@@ -13,14 +13,21 @@ By the end you will have:
 
 ## Where this fits — the overall architecture
 
-The coding agent runs in a **container inside a MicroVM** on your laptop. All
-enforcement — **network proxy, network policy, and filesystem policy** — lives
-on the host in the `sbx` daemon, *around* the sandbox. The **MCP Gateway** the
-agent calls (set by `SBX_MCP_URL`) is either **local** (on your laptop) or
-**remote** (Docker-hosted). Every decision is audited.
+Policy is authored centrally in **Docker Hub → AI Governance** (the Settings UI
+or the AI Governance API) and synced to the laptop at `docker login` — it takes
+precedence; developers can't override it. The coding agent runs in a **container
+inside a MicroVM** on the host, and all enforcement — **network proxy, network
+policy, and filesystem policy** — lives on the host in the `sbx` daemon, *around*
+the sandbox. The **MCP Gateway** the agent calls (set by `SBX_MCP_URL`) is either
+**local** (on your laptop) or **remote** (Docker-hosted). Every decision is audited.
 
 ```mermaid
 flowchart TB
+    subgraph HUB["☁️ Docker Hub — AI Governance (source of truth)"]
+        SETTINGS["⚙️ Governance Settings (UI)"]
+        API["🔌 AI Governance API"]
+    end
+
     subgraph HOST["💻 HOST — developer laptop"]
         subgraph VM["🔒 MicroVM"]
             subgraph CON["📦 Container"]
@@ -41,6 +48,8 @@ flowchart TB
     INTERNET["🌐 Internet"]
     BLOCK["🚫 Blocked"]
 
+    HUB -. "policy synced at docker login · takes precedence" .-> DAEMON
+
     AGENT -- "network" --> NET
     AGENT -- "file access" --> FS
     AGENT -- "MCP calls · local" --> LOCALGW
@@ -52,16 +61,24 @@ flowchart TB
     NET -. log .-> AUDIT
     FS -. log .-> AUDIT
 
+    classDef hub fill:#eef2ff,stroke:#6366f1,color:#000
     classDef vm fill:#ecfdf5,stroke:#10b981,color:#000
     classDef pol fill:#fff7ed,stroke:#f59e0b,color:#000
     classDef gw fill:#eff6ff,stroke:#3b82f6,color:#000
     classDef deny fill:#fef2f2,stroke:#ef4444,color:#000
+    class SETTINGS,API hub
     class AGENT vm
     class NET,FS pol
     class LOCALGW,REMOTEGW gw
     class BLOCK deny
 ```
 
+> **Policy comes from Docker Hub and takes precedence.** Org admins set it in
+> the **AI Governance Settings** UI or via the **AI Governance API**
+> (`hub.docker.com/v2/orgs/<org>/governance/policies`); the `sbx` daemon fetches
+> it at `docker login` (`sbx policy reset` forces a refresh) and enforces it
+> locally — fail-closed, so no policy means deny-all.
+>
 > **MCP Gateway — local or remote.** `SBX_MCP_URL` points at one of them:
 > `http://localhost:8811` (a gateway you run on the laptop) or
 > `https://connect.docker.com` (Docker's hosted, org-governed gateway).
