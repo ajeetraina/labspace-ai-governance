@@ -24,8 +24,11 @@ the sandbox. The **MCP Gateway** the agent calls (set by `SBX_MCP_URL`) is eithe
 ```mermaid
 flowchart TB
     subgraph HUB["Docker Hub — AI Governance"]
+        direction TB
+        SPACER[" "]
         SETTINGS["Governance Settings (UI)"]
         API["AI Governance API"]
+        SPACER ~~~ SETTINGS ~~~ API
     end
 
     subgraph HOST["HOST — developer laptop"]
@@ -66,6 +69,8 @@ flowchart TB
     classDef pol fill:#fff7ed,stroke:#f59e0b,color:#000
     classDef gw fill:#eff6ff,stroke:#3b82f6,color:#000
     classDef deny fill:#fef2f2,stroke:#ef4444,color:#000
+    classDef hidden fill:none,stroke:none,color:none
+    class SPACER hidden
     class SETTINGS,API hub
     class AGENT vm
     class NET,FS pol
