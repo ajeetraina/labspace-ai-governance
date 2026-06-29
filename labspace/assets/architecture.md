@@ -15,30 +15,30 @@ calls (set by `SBX_MCP_URL`) is either **local** (on your laptop) or **remote**
 
 ```mermaid
 flowchart TB
-    subgraph HUB["☁️ Docker Hub — AI Governance (source of truth)"]
-        SETTINGS["⚙️ Governance Settings (UI)"]
-        API["🔌 AI Governance API"]
+    subgraph HUB["Docker Hub — AI Governance (source of truth)"]
+        SETTINGS["Governance Settings (UI)"]
+        API["AI Governance API"]
     end
 
-    subgraph HOST["💻 HOST — developer laptop"]
-        subgraph VM["🔒 MicroVM"]
-            subgraph CON["📦 Container"]
-                AGENT["🤖 Coding agent"]
+    subgraph HOST["HOST — developer laptop"]
+        subgraph VM["MicroVM"]
+            subgraph CON["Container"]
+                AGENT["Coding agent"]
             end
         end
 
-        subgraph DAEMON["🛡️ sbx daemon — policy + audit"]
-            NET["🌐 Network proxy<br/>+ network policy"]
-            FS["📁 Filesystem policy"]
+        subgraph DAEMON["sbx daemon — policy + audit"]
+            NET["Network proxy<br/>+ network policy"]
+            FS["Filesystem policy"]
         end
 
-        LOCALGW["🚪 Local MCP Gateway<br/>localhost:8811"]
-        AUDIT[("📊 Audit log")]
+        LOCALGW["Local MCP Gateway<br/>localhost:8811"]
+        AUDIT[("Audit log")]
     end
 
-    REMOTEGW["🚪 Remote MCP Gateway<br/>connect.docker.com"]
-    INTERNET["🌐 Internet"]
-    BLOCK["🚫 Blocked"]
+    REMOTEGW["Remote MCP Gateway<br/>connect.docker.com"]
+    INTERNET["Internet"]
+    BLOCK["Blocked"]
 
     HUB -. "policy synced at docker login · takes precedence" .-> DAEMON
 
@@ -76,27 +76,27 @@ Where the policy comes from, and how MCP tool calls are governed and audited:
 
 ```mermaid
 flowchart TB
-    subgraph ADMIN["🏢 Org Admin — Policy Authoring (one source of truth)"]
+    subgraph ADMIN["Org Admin — Policy Authoring (one source of truth)"]
         UI["Admin Console<br/>app.docker.com/admin/orgs/&lt;org&gt;"]
         API["Governance API<br/>hub.docker.com/v2/orgs/&lt;org&gt;/governance/policies"]
     end
 
-    POLICY[("📜 Org Governance Policy<br/>network · filesystem · MCP rules")]
+    POLICY[("Org Governance Policy<br/>network · filesystem · MCP rules")]
     UI --> POLICY
     API --> POLICY
 
     POLICY -. "fetched at<br/>docker login<br/>(sbx policy reset)" .-> DAEMON
 
-    subgraph HOST["💻 Developer Machine"]
-        DAEMON["🛡️ sbx daemon (sandboxd)<br/>caches policy · enforces · audits<br/>fail-closed: no policy ⇒ deny-all"]
+    subgraph HOST["Developer Machine"]
+        DAEMON["sbx daemon (sandboxd)<br/>caches policy · enforces · audits<br/>fail-closed: no policy ⇒ deny-all"]
 
-        subgraph SBOX["📦 Sandbox (isolated)"]
-            AGENT["🤖 Agent<br/>(Claude Code)"]
+        subgraph SBOX["Sandbox (isolated)"]
+            AGENT["Agent<br/>(Claude Code)"]
         end
 
-        STDIO["⚠️ Local stdio MCP server<br/>runs on HOST, full user perms<br/>(ungoverned — outside both boundaries)"]
-        AUDITLOG[("📊 daemon.log (JSONL)<br/>governance policy evaluation<br/>allow / deny + reason + trace_id")]
-        DASH["📈 Observability dashboard<br/>localhost:8090 (tails the log)"]
+        STDIO["Local stdio MCP server<br/>runs on HOST, full user perms<br/>(ungoverned — outside both boundaries)"]
+        AUDITLOG[("daemon.log (JSONL)<br/>governance policy evaluation<br/>allow / deny + reason + trace_id")]
+        DASH["Observability dashboard<br/>localhost:8090 (tails the log)"]
     end
 
     DAEMON --- SBOX
@@ -105,16 +105,16 @@ flowchart TB
 
     AGENT == "tool calls<br/>SBX_MCP_URL" ==> GW
 
-    subgraph GWZONE["🚪 MCP Gateway (single governed control plane)"]
+    subgraph GWZONE["MCP Gateway (single governed control plane)"]
         GW["mcp-gateway<br/>aggregates backends<br/>tools: mcp__mcp-gateway__*"]
     end
 
     GW -- "policy check + audit<br/>per tool call" --> AUDITLOG
     AGENT -. "ungoverned path" .-> STDIO
 
-    GW --> WIKI["📚 local-wiki<br/>(Wikipedia MCP)"]
-    GW --> REMOTE["🌐 Remote OAuth server<br/>(Notion / GitHub / …)"]
-    GW --> IMG["📦 docker.io image server<br/>(DuckDuckGo / …)"]
+    GW --> WIKI["local-wiki<br/>(Wikipedia MCP)"]
+    GW --> REMOTE["Remote OAuth server<br/>(Notion / GitHub / …)"]
+    GW --> IMG["docker.io image server<br/>(DuckDuckGo / …)"]
 
     classDef admin fill:#e8f0fe,stroke:#4285f4,color:#000
     classDef policy fill:#fff4e5,stroke:#f59e0b,color:#000
@@ -147,10 +147,10 @@ flowchart TB
 
 ```mermaid
 flowchart LR
-    A["🤖 Agent in sandbox"] -- SBX_MCP_URL --> CHOICE{"which gateway?"}
-    CHOICE -- "http://localhost:8811" --> LOCAL["🐳 Local MCP Gateway<br/>Compose or Desktop MCP Toolkit<br/>you front it · you control what's registered"]
-    CHOICE -- "https://connect.docker.com" --> HOSTED["🏢 Hosted control plane<br/>MCP Gateway Enterprise<br/>org controls what's registerable · central audit"]
-    CHOICE -. "❌ registry.modelcontextprotocol.io" .-> BAD["catalog, not a gateway<br/>→ 501 / 'No MCP servers configured'"]
+    A["Agent in sandbox"] -- SBX_MCP_URL --> CHOICE{"which gateway?"}
+    CHOICE -- "http://localhost:8811" --> LOCAL["Local MCP Gateway<br/>Compose or Desktop MCP Toolkit<br/>you front it · you control what's registered"]
+    CHOICE -- "https://connect.docker.com" --> HOSTED["Hosted control plane<br/>MCP Gateway Enterprise<br/>org controls what's registerable · central audit"]
+    CHOICE -. "registry.modelcontextprotocol.io" .-> BAD["catalog, not a gateway<br/>→ 501 / 'No MCP servers configured'"]
 
     classDef good fill:#e6f4ea,stroke:#34a853,color:#000
     classDef bad fill:#fce8e6,stroke:#ea4335,color:#000
