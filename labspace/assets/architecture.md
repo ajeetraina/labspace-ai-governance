@@ -15,7 +15,7 @@ calls (set by `SBX_MCP_URL`) is either **local** (on your laptop) or **remote**
 
 ```mermaid
 flowchart TB
-    subgraph HUB["Docker Hub — AI Governance (source of truth)"]
+    subgraph HUB["Docker Hub — AI Governance"]
         SETTINGS["Governance Settings (UI)"]
         API["AI Governance API"]
     end

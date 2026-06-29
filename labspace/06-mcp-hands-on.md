@@ -23,7 +23,7 @@ the sandbox. The **MCP Gateway** the agent calls (set by `SBX_MCP_URL`) is eithe
 
 ```mermaid
 flowchart TB
-    subgraph HUB["Docker Hub — AI Governance (source of truth)"]
+    subgraph HUB["Docker Hub — AI Governance"]
         SETTINGS["Governance Settings (UI)"]
         API["AI Governance API"]
     end
