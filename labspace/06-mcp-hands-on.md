@@ -15,39 +15,56 @@ By the end you will have:
 
 The coding agent runs in a **container inside a MicroVM** on your laptop. All
 enforcement — **network proxy, network policy, and filesystem policy** — lives
-on the host in the `sbx` daemon, *around* the sandbox. Every decision is audited.
+on the host in the `sbx` daemon, *around* the sandbox. The **MCP Gateway** the
+agent calls (set by `SBX_MCP_URL`) is either **local** (on your laptop) or
+**remote** (Docker-hosted). Every decision is audited.
 
 ```mermaid
 flowchart TB
     subgraph HOST["💻 HOST — developer laptop"]
         subgraph VM["🔒 MicroVM"]
             subgraph CON["📦 Container"]
-                AGENT["🤖 Coding agent<br/>(Claude Code)"]
+                AGENT["🤖 Coding agent"]
             end
         end
 
-        subgraph DAEMON["🛡️ sbx daemon — enforces policy + writes audit"]
+        subgraph DAEMON["🛡️ sbx daemon — policy + audit"]
             NET["🌐 Network proxy<br/>+ network policy"]
             FS["📁 Filesystem policy"]
         end
+
+        LOCALGW["🚪 Local MCP Gateway<br/>localhost:8811"]
         AUDIT[("📊 Audit log")]
     end
 
-    AGENT -- "network request" --> NET
+    REMOTEGW["🚪 Remote MCP Gateway<br/>connect.docker.com"]
+    INTERNET["🌐 Internet"]
+    BLOCK["🚫 Blocked"]
+
+    AGENT -- "network" --> NET
     AGENT -- "file access" --> FS
-    NET -- "✓ allow" --> OUT["🌐 Internet / 🚪 MCP Gateway"]
-    NET -- "✗ deny" --> B1["🚫 Blocked"]
-    FS -- "✗ deny" --> B2["🚫 Blocked"]
-    NET -. logs .-> AUDIT
-    FS -. logs .-> AUDIT
+    AGENT -- "MCP calls · local" --> LOCALGW
+    AGENT -- "MCP calls · remote" --> REMOTEGW
+
+    NET -- "allow" --> INTERNET
+    NET -- "deny" --> BLOCK
+    FS -- "deny" --> BLOCK
+    NET -. log .-> AUDIT
+    FS -. log .-> AUDIT
 
     classDef vm fill:#ecfdf5,stroke:#10b981,color:#000
     classDef pol fill:#fff7ed,stroke:#f59e0b,color:#000
+    classDef gw fill:#eff6ff,stroke:#3b82f6,color:#000
     classDef deny fill:#fef2f2,stroke:#ef4444,color:#000
     class AGENT vm
     class NET,FS pol
-    class B1,B2 deny
+    class LOCALGW,REMOTEGW gw
+    class BLOCK deny
 ```
+
+> **MCP Gateway — local or remote.** `SBX_MCP_URL` points at one of them:
+> `http://localhost:8811` (a gateway you run on the laptop) or
+> `https://connect.docker.com` (Docker's hosted, org-governed gateway).
 
 > [!TIP]
 > Full version — policy authoring, the MCP Gateway, and the audit stream:
