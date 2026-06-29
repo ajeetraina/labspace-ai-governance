@@ -13,61 +13,39 @@ By the end you will have:
 
 ## Where this fits — the overall architecture
 
-One org policy, authored once, is enforced in **two places** — the sandbox
-(network + filesystem) and the **MCP Gateway** (every tool call) — and every
-decision lands in one audit stream. This section is the MCP Gateway half.
+The coding agent runs in a **container inside a MicroVM** on your host. Every
+network request it makes passes through the **network policy** — allow or deny —
+and each decision is written to the audit log.
 
 ```mermaid
 flowchart TB
-    subgraph ADMIN["🏢 Org Admin — Policy Authoring (one source of truth)"]
-        UI["Admin Console<br/>app.docker.com/admin/orgs/&lt;org&gt;"]
-        API["Governance API<br/>hub.docker.com/v2/.../governance/policies"]
-    end
-
-    POLICY[("📜 Org Governance Policy<br/>network · filesystem · MCP rules")]
-    UI --> POLICY
-    API --> POLICY
-    POLICY -. "fetched at docker login<br/>(sbx policy reset)" .-> DAEMON
-
-    subgraph HOST["💻 Developer Machine"]
-        DAEMON["🛡️ sbx daemon (sandboxd)<br/>caches policy · enforces · audits<br/>fail-closed: no policy ⇒ deny-all"]
-        subgraph SBOX["📦 Sandbox (isolated)"]
-            AGENT["🤖 Agent (Claude Code)"]
+    subgraph HOST["💻 HOST — developer machine"]
+        DAEMON["🛡️ sbx daemon<br/>enforces policy · writes audit"]
+        subgraph VM["🔒 MicroVM"]
+            subgraph CON["📦 Container"]
+                AGENT["🤖 Coding agent<br/>(Claude Code)"]
+            end
         end
-        STDIO["⚠️ Local stdio MCP server<br/>runs on HOST, full perms<br/>(ungoverned)"]
-        AUDITLOG[("📊 daemon.log JSONL<br/>governance policy evaluation<br/>allow / deny + reason + trace_id")]
-        DASH["📈 Observability dashboard<br/>localhost:8090"]
+        AUDIT[("📊 Audit log")]
     end
 
-    DAEMON --- SBOX
-    DAEMON -- "net + fs decisions" --> AUDITLOG
-    AUDITLOG --> DASH
-    AGENT == "tool calls (SBX_MCP_URL)" ==> GW
-    AGENT -. "ungoverned path" .-> STDIO
+    AGENT --> GATE{"Network policy<br/>allow or deny?"}
+    DAEMON -. enforces .- GATE
+    GATE -- "✓ allow" --> NET["🌐 Internet"]
+    GATE -- "✓ allow (tool calls)" --> GW["🚪 MCP Gateway"]
+    GATE -- "✗ deny" --> BLOCK["🚫 Blocked"]
+    GATE -. every decision .-> AUDIT
 
-    subgraph GWZONE["🚪 MCP Gateway (single governed control plane)"]
-        GW["mcp-gateway<br/>aggregates backends<br/>mcp__mcp-gateway__*"]
-    end
-
-    GW -- "policy + audit per call" --> AUDITLOG
-    GW --> WIKI["📚 local-wiki"]
-    GW --> REMOTE["🌐 Remote OAuth server"]
-    GW --> IMG["📦 docker.io image server"]
-
-    classDef admin fill:#e8f0fe,stroke:#4285f4,color:#000
-    classDef policy fill:#fff4e5,stroke:#f59e0b,color:#000
-    classDef gw fill:#e6f4ea,stroke:#34a853,color:#000
-    classDef warn fill:#fce8e6,stroke:#ea4335,color:#000
-    classDef audit fill:#f3e8fd,stroke:#9333ea,color:#000
-    class UI,API admin
-    class POLICY policy
-    class GW gw
-    class STDIO warn
-    class AUDITLOG,DASH audit
+    classDef vm fill:#ecfdf5,stroke:#10b981,color:#000
+    classDef gate fill:#fff7ed,stroke:#f59e0b,color:#000
+    classDef deny fill:#fef2f2,stroke:#ef4444,color:#000
+    class AGENT vm
+    class GATE gate
+    class BLOCK deny
 ```
 
 > [!TIP]
-> Full version with the `SBX_MCP_URL` gateway-choice diagram and a walkthrough:
+> Full version — policy authoring, the MCP Gateway, and the audit stream:
 > [overall architecture](assets/architecture.md).
 
 ## The one concept: `SBX_MCP_URL` must point at a gateway

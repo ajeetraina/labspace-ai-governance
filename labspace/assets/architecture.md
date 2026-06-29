@@ -3,7 +3,42 @@
 How a single org policy, authored once, is enforced across the sandbox **and**
 every MCP tool call — with every decision landing in one audit/visibility stream.
 
-## The big picture
+## At a glance
+
+The coding agent runs in a **container inside a MicroVM** on your host. Every
+network request passes through the **network policy** (allow or deny); each
+decision is audited.
+
+```mermaid
+flowchart TB
+    subgraph HOST["💻 HOST — developer machine"]
+        DAEMON["🛡️ sbx daemon<br/>enforces policy · writes audit"]
+        subgraph VM["🔒 MicroVM"]
+            subgraph CON["📦 Container"]
+                AGENT["🤖 Coding agent<br/>(Claude Code)"]
+            end
+        end
+        AUDIT[("📊 Audit log")]
+    end
+
+    AGENT --> GATE{"Network policy<br/>allow or deny?"}
+    DAEMON -. enforces .- GATE
+    GATE -- "✓ allow" --> NET["🌐 Internet"]
+    GATE -- "✓ allow (tool calls)" --> GW["🚪 MCP Gateway"]
+    GATE -- "✗ deny" --> BLOCK["🚫 Blocked"]
+    GATE -. every decision .-> AUDIT
+
+    classDef vm fill:#ecfdf5,stroke:#10b981,color:#000
+    classDef gate fill:#fff7ed,stroke:#f59e0b,color:#000
+    classDef deny fill:#fef2f2,stroke:#ef4444,color:#000
+    class AGENT vm
+    class GATE gate
+    class BLOCK deny
+```
+
+## The full picture
+
+Where the policy comes from, and how MCP tool calls are governed and audited:
 
 ```mermaid
 flowchart TB
