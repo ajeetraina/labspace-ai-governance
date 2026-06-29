@@ -21,7 +21,7 @@ Three live sources, normalised into one event stream:
 Plus:
 
 - **Synthesised user identity** stamped on every event from `$USER` / `$LABSPACE_USER`. Visible in the header and in the new User column.
-- **MCP server destination detection** - events targeting `mcp.*`, `mcp-*`, `registry.modelcontextprotocol.io` get a purple dot in the table and surface in the "MCP servers reached" panel.
+- **MCP server destination detection** - events targeting `mcp.*`, `mcp-*`, `connect.docker.com` get a purple dot in the table and surface in the "MCP servers reached" panel.
 - **MCP-only view** - one-click filter to hide non-MCP events.
 
 ## What it deliberately doesn't show
@@ -102,7 +102,7 @@ This is almost certainly a deliberate product choice. Logging prompt content has
 | Scenario | What you can see |
 |---|---|
 | `sbx mcp add local-ddg --command docker --args ...` (Mode 4, local stdio) | The subprocess runs on your host. Wrap it yourself if you want audit. |
-| `sbx mcp add fetch --url https://registry.modelcontextprotocol.io/...` (Mode 2/3) | If routed through a gateway you run with `--verbose=true`, the dashboard surfaces `list-tools` / `call-tool` lines from the gateway's stdout. Classification is heuristic, not structured. |
+| `sbx mcp add ddg-image --url docker.io/mcp/duckduckgo` (docker.io image) | If routed through a gateway you run with `--verbose=true`, the dashboard surfaces `list-tools` / `call-tool` lines from the gateway's stdout. Classification is heuristic, not structured. |
 | `sbx mcp add notion --url https://mcp.notion.com/mcp` (Mode 1, hosted) | **Nothing.** The tool call happens between Docker's hosted MCP control plane and the remote server. You see the TCP connect to `mcp.notion.com:443` in the sbx network log; you do not see which Notion tool was called. |
 
 To actually get structured tool-call audit, the upstream `docker/mcp-gateway` would need to emit JSONL audit records per call. It doesn't today. Filing a feature request against [docker/mcp-gateway](https://github.com/docker/mcp-gateway) is the right path.

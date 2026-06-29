@@ -1,1 +1,4 @@
 project/setup/.env
+
+# Local scratch clone (nested git repo) — not part of the labspace
+sbx-quickstart/
