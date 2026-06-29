@@ -13,35 +13,40 @@ By the end you will have:
 
 ## Where this fits — the overall architecture
 
-The coding agent runs in a **container inside a MicroVM** on your host. Every
-network request it makes passes through the **network policy** — allow or deny —
-and each decision is written to the audit log.
+The coding agent runs in a **container inside a MicroVM** on your laptop. All
+enforcement — **network proxy, network policy, and filesystem policy** — lives
+on the host in the `sbx` daemon, *around* the sandbox. Every decision is audited.
 
 ```mermaid
 flowchart TB
-    subgraph HOST["💻 HOST — developer machine"]
-        DAEMON["🛡️ sbx daemon<br/>enforces policy · writes audit"]
+    subgraph HOST["💻 HOST — developer laptop"]
         subgraph VM["🔒 MicroVM"]
             subgraph CON["📦 Container"]
                 AGENT["🤖 Coding agent<br/>(Claude Code)"]
             end
         end
+
+        subgraph DAEMON["🛡️ sbx daemon — enforces policy + writes audit"]
+            NET["🌐 Network proxy<br/>+ network policy"]
+            FS["📁 Filesystem policy"]
+        end
         AUDIT[("📊 Audit log")]
     end
 
-    AGENT --> GATE{"Network policy<br/>allow or deny?"}
-    DAEMON -. enforces .- GATE
-    GATE -- "✓ allow" --> NET["🌐 Internet"]
-    GATE -- "✓ allow (tool calls)" --> GW["🚪 MCP Gateway"]
-    GATE -- "✗ deny" --> BLOCK["🚫 Blocked"]
-    GATE -. every decision .-> AUDIT
+    AGENT -- "network request" --> NET
+    AGENT -- "file access" --> FS
+    NET -- "✓ allow" --> OUT["🌐 Internet / 🚪 MCP Gateway"]
+    NET -- "✗ deny" --> B1["🚫 Blocked"]
+    FS -- "✗ deny" --> B2["🚫 Blocked"]
+    NET -. logs .-> AUDIT
+    FS -. logs .-> AUDIT
 
     classDef vm fill:#ecfdf5,stroke:#10b981,color:#000
-    classDef gate fill:#fff7ed,stroke:#f59e0b,color:#000
+    classDef pol fill:#fff7ed,stroke:#f59e0b,color:#000
     classDef deny fill:#fef2f2,stroke:#ef4444,color:#000
     class AGENT vm
-    class GATE gate
-    class BLOCK deny
+    class NET,FS pol
+    class B1,B2 deny
 ```
 
 > [!TIP]
