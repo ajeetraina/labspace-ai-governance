@@ -23,30 +23,30 @@ the sandbox. The **MCP Gateway** the agent calls (set by `SBX_MCP_URL`) is eithe
 
 ```mermaid
 flowchart TB
-    subgraph HUB["☁️ Docker Hub — AI Governance (source of truth)"]
-        SETTINGS["⚙️ Governance Settings (UI)"]
-        API["🔌 AI Governance API"]
+    subgraph HUB["Docker Hub — AI Governance (source of truth)"]
+        SETTINGS["Governance Settings (UI)"]
+        API["AI Governance API"]
     end
 
-    subgraph HOST["💻 HOST — developer laptop"]
-        subgraph VM["🔒 MicroVM"]
-            subgraph CON["📦 Container"]
-                AGENT["🤖 Coding agent"]
+    subgraph HOST["HOST — developer laptop"]
+        subgraph VM["MicroVM"]
+            subgraph CON["Container"]
+                AGENT["Coding agent"]
             end
         end
 
-        subgraph DAEMON["🛡️ sbx daemon — policy + audit"]
-            NET["🌐 Network proxy<br/>+ network policy"]
-            FS["📁 Filesystem policy"]
+        subgraph DAEMON["sbx daemon — policy + audit"]
+            NET["Network proxy<br/>+ network policy"]
+            FS["Filesystem policy"]
         end
 
-        LOCALGW["🚪 Local MCP Gateway<br/>localhost:8811"]
-        AUDIT[("📊 Audit log")]
+        LOCALGW["Local MCP Gateway<br/>localhost:8811"]
+        AUDIT[("Audit log")]
     end
 
-    REMOTEGW["🚪 Remote MCP Gateway<br/>connect.docker.com"]
-    INTERNET["🌐 Internet"]
-    BLOCK["🚫 Blocked"]
+    REMOTEGW["Remote MCP Gateway<br/>connect.docker.com"]
+    INTERNET["Internet"]
+    BLOCK["Blocked"]
 
     HUB -. "policy synced at docker login · takes precedence" .-> DAEMON
 
