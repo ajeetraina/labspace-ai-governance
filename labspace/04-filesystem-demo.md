@@ -139,6 +139,41 @@ sbx policy ls
 
 Scroll to filesystem rules. You should see `allow workdemo` and `deny credentials` with `ORIGIN: remote`.
 
+To see **every** filesystem rule that could apply — including inactive ones and any left over from earlier experiments — add `--include-inactive`:
+
+```bash no-run-button
+sbx policy ls --include-inactive
+```
+
+The filesystem rows look like this (your exact set will vary):
+
+```
+PROVENANCE   APPLIES_TO   POLICY/RULE                                              TYPE               DECISION   RESOURCES
+remote       all          allowwork / allowwork                                    filesystem:write   allow      /Users/ajeetraina/work/**
+remote       all          workdemo / workdemo                                      filesystem:write   allow      /Users/ajeetraina/workdemo/**
+remote       all          labproject / validatekit                                 filesystem:write   allow      /Users/ajeetraina/.labspace/project/**
+remote       all          allowcodexx / allowcodex                                 filesystem:write   allow      C:\Users\ajeet\work
+remote       all          allowscratch / allowscratch                              filesystem:write   allow      /Users/ajeetraina/scratch
+remote       all          allowfs / allowfs                                        filesystem:write   allow      ~/labspace-fs-test/**
+remote       all          Labspace AI Governance - filesystem / allow workdemo     filesystem:write   allow      ~/workdemo/**
+remote       all          Labspace AI Governance - filesystem / deny credentials   filesystem:write   deny       ~/.aws/**
+                                                                                                                 ~/.config/gcloud/**
+                                                                                                                 ~/.docker/config.json
+                                                                                                                 ~/.kube/config
+                                                                                                                 ~/.ssh/**
+remote       all          allowin / allowinn                                       filesystem:write   allow      C:\Users\ajeet\Downloads\sbx-kits-box-main\*
+```
+
+Reading the columns:
+
+- **PROVENANCE** `remote` — the rule came from org governance (Docker Hub), not a local override. These are authoritative; a developer can't disable them.
+- **APPLIES_TO** `all` — applies to every principal in the org.
+- **POLICY/RULE** — the policy name and the individual rule inside it (e.g. `Labspace AI Governance - filesystem / deny credentials`).
+- **TYPE** / **DECISION** — the action class (`filesystem:write`) and `allow` or `deny`.
+- **RESOURCES** — the path globs the rule matches; a `deny` rule lists each protected path on its own line.
+
+The two rows that drive this demo are `Labspace AI Governance - filesystem / allow workdemo` (allow `~/workdemo/**`) and `… / deny credentials` (deny the five secret paths). The other rows are leftover allow rules from earlier experiments — harmless here, but a good reminder that **`deny` always wins**: even with all those allows, `deny credentials` still blocks `~/.ssh` in Test 2.
+
 ## Step 3 - Create the test directories
 
 Three separate workdirs so each `sbx run` creates a fresh sandbox without name collision. Two live under the allowed `~/workdemo`; the third is deliberately **outside** it to prove default-deny:
