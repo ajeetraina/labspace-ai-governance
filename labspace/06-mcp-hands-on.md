@@ -11,6 +11,11 @@ By the end you will have:
 **Time:** ~15 minutes
 **Prerequisites:** Sections 00 and 01, plus `sbx login`.
 
+> [!TIP]
+> For how this section fits the whole system - policy authoring, sandbox + MCP
+> enforcement, and the shared audit stream - see the
+> [overall architecture diagram](assets/architecture.md).
+
 ## The one concept: `SBX_MCP_URL` must point at a gateway
 
 The `sbx mcp` command exists in recent `sbx` builds but is **hidden** until an environment variable enables it:
