@@ -34,6 +34,7 @@ Every policy decision generates a structured event with user identity, timestamp
 | 03 - Network Enforcement Demo | Prove network policies enforce with three `curl`s |
 | 04 - Filesystem Enforcement Demo | Prove filesystem policies enforce on a credentials directory |
 | Credential Isolation | Prove the real API keys never enter the sandbox |
+| Sandbox Kits | Package a reproducible, compliant sandbox as a declarative kit - governance as code |
 | Putting It All Together | **The capstone** - stop one rogue agent's four attacks in a single sandbox, then read the CISO scorecard |
 | What's Next | Preview audit trails and MCP governance |
 

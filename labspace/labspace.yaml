@@ -31,6 +31,9 @@ sections:
   - title: MCP Hands-On
     contentPath: 06-mcp-hands-on.md
 
+  - title: Sandbox Kits
+    contentPath: 14-sandbox-kits.md
+
   - title: Putting It All Together
     contentPath: 13-end-to-end-governance.md
 
