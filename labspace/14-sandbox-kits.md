@@ -13,8 +13,8 @@ You already met every property a kit packages - kits just make them **declarativ
 
 | Property | You saw it in | A kit makes it... |
 | --- | --- | --- |
-| Egress allowlist | Network (03) | a few lines of `network.allowedDomains` in `spec.yaml` |
-| Credentials never enter the VM | Credential Isolation (12) | `credentials.sources` + proxy `serviceAuth`, wired once |
+| Egress allowlist | Network (03) | a few lines of `caps.network.allow` in `spec.yaml` |
+| Credentials never enter the VM | Credential Isolation (12) | a `credentials` block with `apiKey.inject`, wired once |
 | One governed MCP endpoint | MCP (06) | servers declared in the kit, attached at creation |
 | Reproducible workspace | Filesystem (04) | static `files/` injected into the workspace |
 
@@ -30,12 +30,11 @@ Instead of "clone this, export that, remember `--kit` twice," a teammate runs **
 
 | Field | What it does |
 | --- | --- |
+| `caps.network.allow` | Domains the sandbox may reach |
+| `credentials` (list) | Per-service secrets the proxy injects via `apiKey.inject` - never in the VM |
+| `files/` | Static files injected into the workspace or `/home/agent/` |
 | `commands.install` | Runs once at creation - installs tools |
 | `commands.startup` | Runs on every start - background services |
-| `files/` | Static files injected into `/home/agent/` or the workspace |
-| `network.allowedDomains` | Domains the sandbox may reach |
-| `credentials.sources` | Where the proxy reads secrets on the host (never in the VM) |
-| `environment.proxyManaged` | Env vars whose values the proxy injects per request |
 
 ## A minimal mixin - build it step by step
 
@@ -60,7 +59,7 @@ cd ~/workdemo/kits-lab
 
 ```bash no-run-button
 cat > kits/docker-review/spec.yaml <<'EOF'
-schemaVersion: "1"
+schemaVersion: "2"
 kind: mixin
 name: docker-review
 displayName: Dockerfile review skill
@@ -111,20 +110,89 @@ The `files/workspace/` tree lands in the workspace at creation, and Claude Code 
 
 ## Layer kits like the enterprise pattern
 
-Kits compose, so real deployments split concerns across layers and stack them (illustrative layer names):
+Kits compose, so real deployments split concerns across layers - a security baseline, a language layer, and org config - then stack them. Build three small mixins alongside the one you just made.
+
+### Step 1 - Create the three layer kits
+
+```bash no-run-button
+cd ~/workdemo/kits-lab
+mkdir -p kits/enterprise-base kits/node-python kits/enterprise-cfg/files/workspace/.claude
+
+# Security baseline - corporate egress allowlist
+cat > kits/enterprise-base/spec.yaml <<'EOF'
+schemaVersion: "2"
+kind: mixin
+name: enterprise-base
+displayName: Enterprise egress baseline
+description: Corporate egress allowlist for AI, Docker, and source-control endpoints
+caps:
+  network:
+    allow:
+      - api.anthropic.com
+      - registry-1.docker.io
+      - auth.docker.io
+      - github.com
+      - "*.githubusercontent.com"
+EOF
+
+# Language layer - package-registry egress for Node + Python
+cat > kits/node-python/spec.yaml <<'EOF'
+schemaVersion: "2"
+kind: mixin
+name: node-python
+displayName: Node + Python registry access
+description: Grants egress to the Node and Python package registries
+caps:
+  network:
+    allow:
+      - registry.npmjs.org
+      - nodejs.org
+      - pypi.org
+      - files.pythonhosted.org
+EOF
+
+# Org config - inject enterprise Claude Code settings into the workspace
+cat > kits/enterprise-cfg/spec.yaml <<'EOF'
+schemaVersion: "2"
+kind: mixin
+name: enterprise-cfg
+displayName: Enterprise config
+description: Injects enterprise-approved Claude Code settings into the workspace
+EOF
+
+cat > kits/enterprise-cfg/files/workspace/.claude/settings.json <<'EOF'
+{
+  "permissions": {
+    "deny": ["Bash(sudo:*)", "Bash(rm -rf /*)"]
+  }
+}
+EOF
+```
+
+Validate all three before running:
+
+```bash no-run-button
+for k in enterprise-base node-python enterprise-cfg; do sbx kit validate ./kits/$k/; done
+```
+
+### Step 2 - Stack all three on one sandbox
 
 ```bash no-run-button
 sbx run claude \
-  --kit ./kits/enterprise-base/   \  # egress allowlist + credential wiring
-  --kit ./kits/node-python/       \  # language toolchains
-  --kit ./kits/enterprise-cfg/       # .gitconfig, .npmrc, settings.json
+  --kit ./kits/enterprise-base/ \
+  --kit ./kits/node-python/ \
+  --kit ./kits/enterprise-cfg/ \
+  --name enterprise-lab
 ```
 
-Swap the language layer without touching the security layer. `allowedDomains` are unioned, `files/` from every kit are injected, and install commands run in order.
+The `caps.network.allow` lists from all three are **unioned**, and every `files/` tree is injected. Swap the language layer (`node-python` → a `go` kit) without touching the security baseline or the config layer.
+
+> [!WARNING]
+> Don't put a trailing `#` comment after a `\` line-continuation - `bash`/`zsh` then treats the backslash as escaping the space, not the newline, and reads `--kit` as a separate command (`command not found: --kit`). Keep continued lines clean; put any comments on their own line.
 
 ## The governance ceiling: kits don't widen policy
 
-This is the point that ties kits back to the last three sections. A kit's `network.allowedDomains` are **additive on top of what's already allowed** - but when `$$org$$` owns a rule type, **org policy is the ceiling**. A domain your kit lists that the org policy doesn't allow stays **blocked** (default-deny; local rules go inactive because *corporate policy takes precedence* - Section 02).
+This is the point that ties kits back to the last three sections. A kit's `caps.network.allow` entries are **additive on top of what's already allowed** - but when `$$org$$` owns a rule type, **org policy is the ceiling**. A domain your kit lists that the org policy doesn't allow stays **blocked** (default-deny; local rules go inactive because *corporate policy takes precedence* - Section 02).
 
 > [!IMPORTANT]
 > Kits are developer-side convenience; **org governance is authoritative.** A kit can make an *approved* setup reproducible - it cannot grant an agent access the CISO's policy denies. Network, filesystem, and MCP policy all still win. That's the whole point: developers move fast *inside* the guardrails.
@@ -133,8 +201,8 @@ This is the point that ties kits back to the last three sections. A kit's `netwo
 
 | Pillar | Enforced by (admin) | Packaged by (kit) |
 | --- | --- | --- |
-| Network | Org network policy | `network.allowedDomains` (within the org ceiling) |
-| Credential | Proxy injection | `credentials.sources` + `serviceAuth` |
+| Network | Org network policy | `caps.network.allow` (within the org ceiling) |
+| Credential | Proxy injection | `credentials` block with `apiKey.inject` |
 | MCP | Cedar allow-list at the gateway | servers declared / attached by the kit |
 | Filesystem | Org filesystem policy | `files/` workspace injection (within allowed paths) |
 
