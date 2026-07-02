@@ -21,7 +21,7 @@ Three live sources, normalised into one event stream:
 Plus:
 
 - **Synthesised user identity** stamped on every event from `$USER` / `$LABSPACE_USER`. Visible in the header and in the new User column.
-- **MCP server destination detection** - events targeting `mcp.*`, `mcp-*`, `connect.docker.com` get a purple dot in the table and surface in the "MCP servers reached" panel.
+- **MCP server destination detection** - events targeting `mcp.*`, `mcp-*`, `gateway.docker.com` get a purple dot in the table and surface in the "MCP servers reached" panel.
 - **MCP-only view** - one-click filter to hide non-MCP events.
 
 ## What it deliberately doesn't show

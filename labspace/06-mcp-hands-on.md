@@ -47,7 +47,7 @@ flowchart TB
         AUDIT[("Audit log")]
     end
 
-    REMOTEGW["Remote MCP Gateway<br/>connect.docker.com"]
+    REMOTEGW["Remote MCP Gateway<br/>gateway.docker.com"]
     INTERNET["Internet"]
     BLOCK["Blocked"]
 
@@ -86,7 +86,7 @@ flowchart TB
 >
 > **MCP Gateway — local or remote.** `SBX_MCP_URL` points at one of them:
 > `http://localhost:8811` (a gateway you run on the laptop) or
-> `https://connect.docker.com` (Docker's hosted, org-governed gateway).
+> `https://gateway.docker.com` (Docker's hosted, org-governed gateway).
 
 > [!TIP]
 > Full version — policy authoring, the MCP Gateway, and the audit stream:
@@ -105,7 +105,7 @@ Setting `SBX_MCP_URL` to an absolute http/https URL does two things: it **unlock
 > [!IMPORTANT]
 > **Point `SBX_MCP_URL` at a real gateway - nothing else.** Only two values carry the full governed flow:
 > 1. a **local Docker MCP Gateway** (`http://localhost:8811`), or
-> 2. Docker's **hosted control plane** (`https://connect.docker.com`).
+> 2. Docker's **hosted control plane** (`https://gateway.docker.com`).
 >
 > Do **not** point it at the public MCP registry (`registry.modelcontextprotocol.io`). A registry is a *catalog, not a gateway* - it can't provision anything. With it, `sbx mcp add` appears to succeed but attaching fails: the daemon logs `501` / `WARN: mcp gateway setup failed` and the agent reports **"No MCP servers configured."**
 
@@ -134,14 +134,14 @@ sbx version
 Pick one of the two methods below. Both end with `SBX_MCP_URL` exported and the `sbx mcp` subtree unlocked - the rest of the lab is identical either way.
 
 ::variableSetButton[🐳 Method 1 - Local gateway]{variables="gw=local"}
-::variableSetButton[🏢 Method 2 - connect.docker.com]{variables="gw=hosted"}
+::variableSetButton[🏢 Method 2 - gateway.docker.com]{variables="gw=hosted"}
 
 :::conditionalDisplay{variable="gw" hasNoValue}
 
 > [!NOTE]
 > Pick one of the two buttons above to reveal its steps.
 > - **Method 1 (local gateway)** is self-contained, works offline, and needs no org enablement - best for learning the mechanics.
-> - **Method 2 (`connect.docker.com`)** is **MCP Gateway Enterprise**: the org-governed path where policy and audit actually apply.
+> - **Method 2 (`gateway.docker.com`)** is **MCP Gateway Enterprise**: the org-governed path where policy and audit actually apply.
 
 :::
 
@@ -187,14 +187,14 @@ sbx daemon stop && sbx daemon start -d
 
 :::conditionalDisplay{variable="gw" requiredValue="hosted"}
 
-### Method 2 - Docker's hosted control plane (`connect.docker.com`)
+### Method 2 - Docker's hosted control plane (`gateway.docker.com`)
 
 The endgame of **Pillar 2**: instead of running your own `localhost:8811`, `SBX_MCP_URL` points at Docker's **hosted MCP control plane**, which provisions a governed gateway per sandbox - the same control plane that enforces the network and filesystem policies you proved in Sections 03-04. This is **MCP Gateway Enterprise**.
 
 There's nothing to stand up - point `sbx` at it and restart the daemon:
 
 ```bash no-run-button
-export SBX_MCP_URL=https://connect.docker.com
+export SBX_MCP_URL=https://gateway.docker.com
 sbx daemon stop && sbx daemon start -d
 ```
 
@@ -311,13 +311,13 @@ cd ~/workdemo/mcp-gateway-lab && docker compose down
 
 Everything you did was on the **developer side**: registering servers from your CLI, fronted by the Docker MCP Gateway. The governance side - the org admin approving catalogs, restricting tool sets, injecting per-request secrets, auditing every call - sits in front of the same `sbx mcp` machinery and the same gateway that `SBX_MCP_URL` points at.
 
-With **Method 1** you front your own gateway and control what's registered. With **Method 2 (`connect.docker.com`)** your org admin controls what's *registerable*, and every tool call lands in the audit trail you'll explore in Section 10.
+With **Method 1** you front your own gateway and control what's registered. With **Method 2 (`gateway.docker.com`)** your org admin controls what's *registerable*, and every tool call lands in the audit trail you'll explore in Section 10.
 
 ## Quick recap
 
 You proved:
 
-- `sbx mcp` is gated behind `SBX_MCP_URL`, which must point at a **real gateway** - a **local** one (`localhost:8811`) or Docker's **hosted control plane** (`https://connect.docker.com`). The public registry is a catalog and cannot carry the flow.
+- `sbx mcp` is gated behind `SBX_MCP_URL`, which must point at a **real gateway** - a **local** one (`localhost:8811`) or Docker's **hosted control plane** (`https://gateway.docker.com`). The public registry is a catalog and cannot carry the flow.
 - A local gateway can be run via your own Compose stack or Docker Desktop's MCP Toolkit - interchangeable.
 - The attach flag is `--static-mcp` (not `--mcp`); `sbx mcp load` attaches into an already-running sandbox.
 - Inside the agent, the gateway appears as a single aggregated `mcp-gateway` server - the governed endpoint every tool call flows through.

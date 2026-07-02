@@ -39,7 +39,7 @@ flowchart TB
         AUDIT[("Audit log")]
     end
 
-    REMOTEGW["Remote MCP Gateway<br/>connect.docker.com"]
+    REMOTEGW["Remote MCP Gateway<br/>gateway.docker.com"]
     INTERNET["Internet"]
     BLOCK["Blocked"]
 
@@ -72,7 +72,7 @@ flowchart TB
 
 Policy is set in Docker Hub (**AI Governance Settings** UI or the **AI Governance
 API**) and takes precedence. `SBX_MCP_URL` selects the gateway:
-`http://localhost:8811` (local, on your laptop) or `https://connect.docker.com`
+`http://localhost:8811` (local, on your laptop) or `https://gateway.docker.com`
 (remote, Docker-hosted and org-governed).
 
 ## The full picture
@@ -154,7 +154,7 @@ flowchart TB
 flowchart LR
     A["Agent in sandbox"] -- SBX_MCP_URL --> CHOICE{"which gateway?"}
     CHOICE -- "http://localhost:8811" --> LOCAL["Local MCP Gateway<br/>Compose or Desktop MCP Toolkit<br/>you front it · you control what's registered"]
-    CHOICE -- "https://connect.docker.com" --> HOSTED["Hosted control plane<br/>MCP Gateway Enterprise<br/>org controls what's registerable · central audit"]
+    CHOICE -- "https://gateway.docker.com" --> HOSTED["Hosted control plane<br/>MCP Gateway Enterprise<br/>org controls what's registerable · central audit"]
     CHOICE -. "registry.modelcontextprotocol.io" .-> BAD["catalog, not a gateway<br/>→ 501 / 'No MCP servers configured'"]
 
     classDef good fill:#e6f4ea,stroke:#34a853,color:#000
@@ -163,9 +163,9 @@ flowchart LR
     class BAD bad
 ```
 
-| | Local gateway | `connect.docker.com` |
+| | Local gateway | `gateway.docker.com` |
 |---|---|---|
-| `SBX_MCP_URL` | `http://localhost:8811` | `https://connect.docker.com` |
+| `SBX_MCP_URL` | `http://localhost:8811` | `https://gateway.docker.com` |
 | Who runs it | You (Compose / Desktop) | Docker (hosted) |
 | Governs | what *you* register | what your org *allows* (policy enforced) |
 | Central audit | local log only | org audit trail |
