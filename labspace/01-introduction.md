@@ -34,7 +34,7 @@ Every policy decision generates a structured event with user identity, timestamp
 | 03 - Network Enforcement Demo | Prove network policies enforce with three `curl`s |
 | 04 - Filesystem Enforcement Demo | Prove filesystem policies enforce on a credentials directory |
 | Credential Isolation | Prove the real API keys never enter the sandbox |
-| End-to-End Governance | **The capstone** - stop one rogue agent's four attacks in a single sandbox, then read the CISO scorecard |
+| Putting It All Together | **The capstone** - stop one rogue agent's four attacks in a single sandbox, then read the CISO scorecard |
 | What's Next | Preview audit trails and MCP governance |
 
 The lab focuses on **Pillar 1 (sandbox policies)** because that's what's broadly available today and what you can prove enforces in a 20-minute demo. Pillars 2 and 3 are previewed in Section 05.

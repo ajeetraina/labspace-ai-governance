@@ -1,4 +1,4 @@
-# End-to-End Governance
+# Putting It All Together
 
 You proved each control on its own - network (Section 03), filesystem (Section 04), credential isolation (Section 12), and MCP (Section 06). This section puts all four together against a **single rogue agent** in **one sandbox**, then hands you a one-page scorecard you can walk a security team through.
 
