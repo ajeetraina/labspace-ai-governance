@@ -22,7 +22,7 @@ The `files/workspace/` tree maps directly to the sandbox workspace path. Everyth
 Create `kits/docker-review/spec.yaml`:
 
 ```yaml
-schemaVersion: "1"
+schemaVersion: "2"
 kind: mixin
 name: docker-review
 displayName: Dockerfile review skill

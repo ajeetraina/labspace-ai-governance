@@ -1,6 +1,6 @@
 # Fork an Agent Kit: Claude Without --dangerously-skip-permissions
 
-Mixin kits extend existing agents. Agent kits define one from scratch. The most common use case is forking a built-in agent to change one thing - the entrypoint, the model, or a network rule.
+Mixin kits extend existing agents. Agent kits (`kind: sandbox` in kit-spec v2) define one from scratch. The most common use case is forking a built-in agent to change one thing - the entrypoint, the model, or a network rule.
 
 This section forks the built-in `claude` agent to remove `--dangerously-skip-permissions`, giving you a version where every tool call requires explicit approval.
 
@@ -9,35 +9,33 @@ This section forks the built-in `claude` agent to remove `--dangerously-skip-per
 Create `kits/claude-safe/spec.yaml`:
 
 ```yaml
-schemaVersion: "1"
-kind: agent
+schemaVersion: "2"
+kind: sandbox                 # kit-spec v2 renamed 'agent' to 'sandbox'
 name: claude-safe
 displayName: Claude Code (with approval prompts)
 description: Claude Code without --dangerously-skip-permissions - every tool call requires approval
 
-agent:
+sandbox:
   image: "docker/sandbox-templates:claude-code-docker"
   aiFilename: CLAUDE.md
-  persistence: persistent
   entrypoint:
     run: [claude]   # no --dangerously-skip-permissions
 
-network:
-  serviceDomains:
-    api.anthropic.com: anthropic
-    console.anthropic.com: anthropic
-  serviceAuth:
-    anthropic:
-      headerName: x-api-key
-      valueFormat: "%s"
-  allowedDomains:
-    - "claude.com:443"
+caps:
+  network:
+    allow:
+      - api.anthropic.com
+      - console.anthropic.com
+      - "claude.com:443"
 
 credentials:
-  sources:
-    anthropic:
-      env:
-        - ANTHROPIC_API_KEY
+  - name: anthropic
+    apiKey:
+      inject:
+        - domain: api.anthropic.com
+          header: x-api-key
+        - domain: console.anthropic.com
+          header: x-api-key
 ```
 
 ## Run it
@@ -66,11 +64,10 @@ You now have:
 
 | Field | Notes |
 |---|---|
-| `agent.image` | Must provide a non-root `agent` user at UID 1000 with passwordless sudo |
-| `agent.persistence` | `persistent` = named volume across restarts; `ephemeral` = default |
-| `agent.entrypoint.run` | Replaces the image's entrypoint entirely |
-| `agent.entrypoint.args` | Appended to the image's existing entrypoint |
-| `agent.aiFilename` | Memory file the agent reads at startup (e.g. `CLAUDE.md`, `AGENTS.md`) |
+| `sandbox.image` | Must provide a non-root `agent` user at UID 1000 with passwordless sudo |
+| `sandbox.entrypoint.run` | Replaces the image's entrypoint entirely |
+| `sandbox.entrypoint.args` | Appended to the image's existing entrypoint |
+| `sandbox.aiFilename` | Memory file the agent reads at startup (e.g. `CLAUDE.md`, `AGENTS.md`) |
 | `memory` | Markdown appended to the memory file at sandbox creation |
 
-> **Note:** Agent kits require the image to expose a non-root `agent` user at UID 1000. Build on `docker/sandbox-templates:shell-docker` to get this for free if you're building a custom image.
+> **Note:** Agent kits require the image to expose a non-root `agent` user at UID 1000. Build on `docker/sandbox-templates:shell-docker` to get this for free if you're building a custom image. (`persistence` from kit-spec v1 is removed in v2 - it had no effect.)

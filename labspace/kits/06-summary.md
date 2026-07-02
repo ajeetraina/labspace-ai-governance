@@ -7,7 +7,7 @@ In this section you went from running agents directly to packaging sandbox envir
 | What you did | How |
 |---|---|
 | Shipped a Claude Code skill into the sandbox | Mixin kit with `files/workspace/` injection |
-| Understood proxy-managed credential injection | `credentials.sources` + `serviceAuth` |
+| Understood proxy-managed credential injection | `credentials[].apiKey.inject` |
 | Forked the built-in `claude` agent | Agent kit with custom entrypoint |
 | Stacked two kits on one sandbox | `--kit --kit` |
 | Pulled a kit from the community repo | `git+https://github.com/docker/sbx-kits-contrib.git#dir=…` |

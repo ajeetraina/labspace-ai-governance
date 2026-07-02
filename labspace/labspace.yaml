@@ -31,7 +31,22 @@ sections:
   - title: MCP Hands-On
     contentPath: 06-mcp-hands-on.md
 
-  - title: End-to-End Governance
+  - title: Sandbox Kits
+    contentPath: 14-sandbox-kits.md
+
+  - title: 'Kits: Network & Credentials'
+    contentPath: kits/03-network-and-creds.md
+
+  - title: 'Kits: Fork an Agent Kit'
+    contentPath: kits/04-agent-kit.md
+
+  - title: 'Kits: Stacking & Distribution'
+    contentPath: kits/05-stacking-and-community.md
+
+  - title: 'Kits: Summary'
+    contentPath: kits/06-summary.md
+
+  - title: Putting It All Together
     contentPath: 13-end-to-end-governance.md
 
   - title: Observability

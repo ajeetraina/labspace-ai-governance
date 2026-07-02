@@ -1,4 +1,4 @@
-# End-to-End Governance
+# Putting It All Together
 
 You proved each control on its own - network (Section 03), filesystem (Section 04), credential isolation (Section 12), and MCP (Section 06). This section puts all four together against a **single rogue agent** in **one sandbox**, then hands you a one-page scorecard you can walk a security team through.
 
@@ -163,33 +163,34 @@ Manage MCP servers
 
 ✅ Exactly **one** endpoint - the `mcp-gateway`. Every backend is aggregated *behind* it; the agent has no affordance to open a direct socket to an arbitrary server. Whatever it calls flows through the gateway, where policy and audit apply. *(Section 06)*
 
-### 7b - Registering an unapproved server is refused
+### 7b - A tool outside the allow-list is denied
 
-Now play the attacker: register a backend the org hasn't approved and try to attach it. Under **MCP Gateway Enterprise** (`SBX_MCP_URL=https://gateway.docker.com`), the daemon evaluates the registration against org policy *before* provisioning anything:
-
-```bash no-run-button
-sbx mcp add rogue-tool --url docker.io/mcp/<some-unapproved-server>
-sbx run claude --static-mcp rogue-tool
-```
-
-**Expected:** `sbx mcp add` **returns success** - it only records the registration, so `sbx mcp ls` will list `rogue-tool`. That's not the agent reaching it. The block lands at **attach**: the sandbox comes up, but the gateway is **not** provisioned for the rogue backend - `/mcp` shows no such tools, and the daemon log records a denial instead of a `mcp gateway started` line. Inspect it on the **host**:
+The Cedar policy from Section 06 permits exactly one tool - `get_me` on `github-official`. Because MCP governance is **default-deny**, an invocation of *any* other server or tool is refused at the gateway. Point `sbx` at the hosted gateway, register a server the policy doesn't allow, and attach it:
 
 ```bash no-run-button
-grep -iE "governance|denied|allowed:false|gateway setup failed" \
-  ~/Library/Application\ Support/com.docker.sandboxes/sandboxes/sandboxd/daemon.log | tail -10
+export SBX_MCP_URL=https://gateway.docker.com
+sbx daemon stop                                    # restarts on the next sbx call, inheriting the URL
+sbx mcp add notion --url https://mcp.notion.com/mcp --skip_auth
+sbx run claude --static-mcp notion
 ```
 
-You'll see a `governance policy evaluation ... allowed:false` (policy denial) or `WARN: mcp gateway setup failed` line - the gateway refused to stand up a connection to an unapproved server. The agent never gets the tool.
+Inside the agent, ask it to use the server:
 
-✅ The gateway is the **only** door to MCP tools, and org policy decides what's on the other side of it. An unapproved server can't be attached, its secrets are never injected, and the attempt is audited. *(Section 06)*
+```
+Use the notion tools to list my recent documents.
+```
+
+**Expected:** the agent tries to call a notion tool, but the gateway evaluates the `invoke` against the Cedar allow-list, finds no matching `permit` (only `github-official`/`get_me` is allowed), and **denies** it by default. The agent reports the tool call was blocked by policy; the denial is logged (Section 10).
+
+✅ The gateway authorizes **every tool call** against the org's Cedar allow-list. Anything outside it - a different tool, a different server - is denied by default and audited, no matter what the developer registers. *(Section 06)*
 
 > [!NOTE]
-> **7a is reproducible on any gateway** (local `localhost:8811` or hosted) - it proves the single-endpoint model. **7b's policy rejection requires MCP Gateway Enterprise** (`gateway.docker.com`) with your org enabled; a self-run local gateway has no org catalog to enforce, so it attaches whatever you register. Check your org's enablement at [docker.com/products/ai-governance](https://www.docker.com/products/ai-governance/).
+> **7a** proves the single governed endpoint on any gateway. **7b's denial comes from the org's MCP policy**, enforced by the hosted gateway (`gateway.docker.com`) - the same author-once, sync-everywhere control plane as your network and filesystem rules.
 
-Clean up the rogue registration:
+Clean up:
 
 ```bash no-run-button
-sbx mcp rm rogue-tool 2>/dev/null; sbx mcp ls
+sbx mcp rm notion 2>/dev/null; sbx mcp ls
 ```
 
 ## The governance scorecard
