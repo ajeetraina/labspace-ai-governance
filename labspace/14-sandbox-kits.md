@@ -37,18 +37,9 @@ Instead of "clone this, export that, remember `--kit` twice," a teammate runs **
 | `credentials.sources` | Where the proxy reads secrets on the host (never in the VM) |
 | `environment.proxyManaged` | Env vars whose values the proxy injects per request |
 
-## A minimal mixin
+## A minimal mixin - build it step by step
 
-A kit can be as small as a spec plus one file. This mixin ships a Claude Code skill into the workspace - no install step, just file injection:
-
-```yaml
-# kits/docker-review/spec.yaml
-schemaVersion: "1"
-kind: mixin
-name: docker-review
-displayName: Dockerfile review skill
-description: Ships a Claude Code skill that reviews Dockerfiles
-```
+A kit can be as small as a spec plus one file. This mixin ships a Claude Code skill into the workspace - no install step, just file injection. You'll end up with:
 
 ```
 kits/docker-review/
@@ -56,13 +47,67 @@ kits/docker-review/
 └── files/workspace/.claude/skills/docker-review/SKILL.md
 ```
 
-Run it - stacked on the built-in agent:
+### Step 1 - Create the kit layout
+
+Work under `~/workdemo` so the sandbox mount stays inside the filesystem path your org policy allows (Section 04):
+
+```bash no-run-button
+mkdir -p ~/workdemo/kits-lab/kits/docker-review/files/workspace/.claude/skills/docker-review
+cd ~/workdemo/kits-lab
+```
+
+### Step 2 - Write the kit spec
+
+```bash no-run-button
+cat > kits/docker-review/spec.yaml <<'EOF'
+schemaVersion: "1"
+kind: mixin
+name: docker-review
+displayName: Dockerfile review skill
+description: Ships a Claude Code skill that reviews Dockerfiles
+EOF
+```
+
+That's the entire spec - no network rules, no install commands, just the skill file the `files/` tree injects.
+
+### Step 3 - Write the skill file
+
+```bash no-run-button
+cat > kits/docker-review/files/workspace/.claude/skills/docker-review/SKILL.md <<'EOF'
+---
+name: docker-review
+description: Review a Dockerfile for best practices. Use when the user asks to review, audit, or improve a Dockerfile.
+---
+
+When reviewing a Dockerfile, check:
+
+1. **Base image** - pinned tag or digest, minimal for the workload
+2. **Layer order** - dependencies before app source to maximise cache reuse
+3. **Image size** - multi-stage builds, `.dockerignore`, `--no-cache` / `--no-install-recommends`
+4. **Security** - non-root `USER`, no secrets in `ARG`/`ENV`, no `--privileged`
+5. **Reproducibility** - pinned package versions, explicit `COPY` targets
+EOF
+```
+
+### Step 4 - Validate the spec (optional, catches errors early)
+
+```bash no-run-button
+sbx kit validate ./kits/docker-review/
+```
+
+### Step 5 - Run it, stacked on the built-in agent
 
 ```bash no-run-button
 sbx run claude --kit ./kits/docker-review/ --name kits-lab
 ```
 
-The `files/workspace/` tree lands in the workspace at creation; Claude Code discovers the skill automatically. Nothing is installed, no shell commands run - the kit is entirely file-based.
+Once Claude loads, ask it:
+
+```
+Review the Dockerfile in this workspace
+```
+
+The `files/workspace/` tree lands in the workspace at creation, and Claude Code discovers the skill at `.claude/skills/docker-review/SKILL.md` automatically. Nothing is installed, no shell commands run - the kit is entirely file-based.
 
 ## Layer kits like the enterprise pattern
 
