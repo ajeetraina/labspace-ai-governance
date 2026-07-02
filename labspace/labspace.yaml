@@ -34,6 +34,12 @@ sections:
   - title: Sandbox Kits
     contentPath: 14-sandbox-kits.md
 
+  - title: 'Kits: Introduction'
+    contentPath: kits/01-intro.md
+
+  - title: 'Kits: Your First Mixin'
+    contentPath: kits/02-first-mixin.md
+
   - title: 'Kits: Network & Credentials'
     contentPath: kits/03-network-and-creds.md
 

@@ -2,9 +2,9 @@
 
 The last three sections were the **admin's** view: network, filesystem, and MCP policies authored in Docker Hub and enforced on every sandbox in `$$org$$`. This section is the **developer's** view - how you package a sandbox that's reproducible and compliant *by construction*, instead of a pile of `sbx run` flags and a setup doc.
 
-The answer is a **kit**: a declarative artifact - a `spec.yaml` plus an optional `files/` directory - that bundles everything a sandbox needs: tools to install, files to inject, network rules, credential wiring, and the agent itself.
+The answer is a **kit**: a declarative artifact - a `spec.yaml` plus an optional `files/` directory - that bundles everything a sandbox needs: tools to install, files to inject, network rules, credential wiring, and the agent itself. This is the governance-level overview; the sections that follow build kits hands-on.
 
-**Time:** ~10 minutes
+**Time:** ~4 minutes (overview)
 **Prerequisites:** Sections 03, 04, and 06.
 
 ## Why kits matter for governance
@@ -36,159 +36,26 @@ Instead of "clone this, export that, remember `--kit` twice," a teammate runs **
 | `commands.install` | Runs once at creation - installs tools |
 | `commands.startup` | Runs on every start - background services |
 
-## A minimal mixin - build it step by step
+## What a kit looks like
 
-A kit can be as small as a spec plus one file. This mixin ships a Claude Code skill into the workspace - no install step, just file injection. You'll end up with:
+A kit can be as small as a `spec.yaml` plus one file - here, a mixin that ships a Claude Code skill into the workspace:
 
-```
-kits/docker-review/
-├── spec.yaml
-└── files/workspace/.claude/skills/docker-review/SKILL.md
-```
-
-### Step 1 - Create the kit layout
-
-Work under `~/workdemo` so the sandbox mount stays inside the filesystem path your org policy allows (Section 04):
-
-```bash no-run-button
-mkdir -p ~/workdemo/kits-lab/kits/docker-review/files/workspace/.claude/skills/docker-review
-cd ~/workdemo/kits-lab
-```
-
-### Step 2 - Write the kit spec
-
-```bash no-run-button
-cat > kits/docker-review/spec.yaml <<'EOF'
+```yaml
+# kits/docker-review/spec.yaml
 schemaVersion: "2"
 kind: mixin
 name: docker-review
 displayName: Dockerfile review skill
 description: Ships a Claude Code skill that reviews Dockerfiles
-EOF
 ```
 
-That's the entire spec - no network rules, no install commands, just the skill file the `files/` tree injects.
-
-### Step 3 - Write the skill file
+A teammate runs it - stacked on the built-in agent - with a single flag:
 
 ```bash no-run-button
-cat > kits/docker-review/files/workspace/.claude/skills/docker-review/SKILL.md <<'EOF'
----
-name: docker-review
-description: Review a Dockerfile for best practices. Use when the user asks to review, audit, or improve a Dockerfile.
----
-
-When reviewing a Dockerfile, check:
-
-1. **Base image** - pinned tag or digest, minimal for the workload
-2. **Layer order** - dependencies before app source to maximise cache reuse
-3. **Image size** - multi-stage builds, `.dockerignore`, `--no-cache` / `--no-install-recommends`
-4. **Security** - non-root `USER`, no secrets in `ARG`/`ENV`, no `--privileged`
-5. **Reproducibility** - pinned package versions, explicit `COPY` targets
-EOF
+sbx run claude --kit ./kits/docker-review/
 ```
 
-### Step 4 - Validate the spec (optional, catches errors early)
-
-```bash no-run-button
-sbx kit validate ./kits/docker-review/
-```
-
-### Step 5 - Run it, stacked on the built-in agent
-
-```bash no-run-button
-sbx run claude --kit ./kits/docker-review/ --name kits-lab
-```
-
-Once Claude loads, ask it:
-
-```
-Review the Dockerfile in this workspace
-```
-
-The `files/workspace/` tree lands in the workspace at creation, and Claude Code discovers the skill at `.claude/skills/docker-review/SKILL.md` automatically. Nothing is installed, no shell commands run - the kit is entirely file-based.
-
-## Layer kits like the enterprise pattern
-
-Kits compose, so real deployments split concerns across layers - a security baseline, a language layer, and org config - then stack them. Build three small mixins alongside the one you just made.
-
-### Step 1 - Create the three layer kits
-
-```bash no-run-button
-cd ~/workdemo/kits-lab
-mkdir -p kits/enterprise-base kits/node-python kits/enterprise-cfg/files/workspace/.claude
-
-# Security baseline - corporate egress allowlist
-cat > kits/enterprise-base/spec.yaml <<'EOF'
-schemaVersion: "2"
-kind: mixin
-name: enterprise-base
-displayName: Enterprise egress baseline
-description: Corporate egress allowlist for AI, Docker, and source-control endpoints
-caps:
-  network:
-    allow:
-      - api.anthropic.com
-      - registry-1.docker.io
-      - auth.docker.io
-      - github.com
-      - "*.githubusercontent.com"
-EOF
-
-# Language layer - package-registry egress for Node + Python
-cat > kits/node-python/spec.yaml <<'EOF'
-schemaVersion: "2"
-kind: mixin
-name: node-python
-displayName: Node + Python registry access
-description: Grants egress to the Node and Python package registries
-caps:
-  network:
-    allow:
-      - registry.npmjs.org
-      - nodejs.org
-      - pypi.org
-      - files.pythonhosted.org
-EOF
-
-# Org config - inject enterprise Claude Code settings into the workspace
-cat > kits/enterprise-cfg/spec.yaml <<'EOF'
-schemaVersion: "2"
-kind: mixin
-name: enterprise-cfg
-displayName: Enterprise config
-description: Injects enterprise-approved Claude Code settings into the workspace
-EOF
-
-cat > kits/enterprise-cfg/files/workspace/.claude/settings.json <<'EOF'
-{
-  "permissions": {
-    "deny": ["Bash(sudo:*)", "Bash(rm -rf /*)"]
-  }
-}
-EOF
-```
-
-Validate all three before running:
-
-```bash no-run-button
-for k in enterprise-base node-python enterprise-cfg; do sbx kit validate ./kits/$k/; done
-```
-
-### Step 2 - Stack all three on one sandbox
-
-```bash no-run-button
-sbx run claude \
-  --kit ./kits/enterprise-base/ \
-  --kit ./kits/node-python/ \
-  --kit ./kits/enterprise-cfg/ \
-  --name enterprise-lab
-```
-
-The `caps.network.allow` lists from all three are **unioned**, and every `files/` tree is injected. Swap the language layer (`node-python` → a `go` kit) without touching the security baseline or the config layer.
-
-> [!WARNING]
-> Don't put a trailing `#` comment after a `\` line-continuation - `bash`/`zsh` then treats the backslash as escaping the space, not the newline, and reads `--kit` as a separate command (`command not found: --kit`). Keep continued lines clean; put any comments on their own line.
+Real deployments **layer** several mixins - a security baseline, a language toolchain, an org-config kit - and stack them with repeated `--kit` flags: `caps.network.allow` lists are unioned and every `files/` tree is injected. You build all of this hands-on in the sections that follow.
 
 ## The governance ceiling: kits don't widen policy
 
@@ -206,11 +73,17 @@ This is the point that ties kits back to the last three sections. A kit's `caps.
 | MCP | Cedar allow-list at the gateway | servers declared / attached by the kit |
 | Filesystem | Org filesystem policy | `files/` workspace injection (within allowed paths) |
 
-## Go deeper
+## Where this goes next
 
-The hands-on kit-authoring track - build a mixin, wire proxy-managed credentials, fork an agent, stack and share via Git/OCI:
+The sections that follow are the hands-on kit-authoring track:
 
-- **[docs.docker.com/ai/sandboxes/customize/kits](https://docs.docker.com/ai/sandboxes/customize/kits/)** - the full spec reference
-- **[github.com/docker/sbx-kits-contrib](https://github.com/docker/sbx-kits-contrib)** - the official community kits repo
+- **Kits: Introduction** - the two kinds of kits and the full capability surface
+- **Kits: Your First Mixin** - build the `docker-review` skill kit end to end
+- **Kits: Network & Credentials** - egress rules and proxy-managed credential injection
+- **Kits: Fork an Agent Kit** - fork `claude` to require approval on every tool call
+- **Kits: Stacking & Distribution** - stack kits and share via Git URL or OCI registry
+- **Kits: Summary** - what kits give you that shell scripts don't
 
-With policies enforced by the org and kits packaging compliant setups for developers, you've seen both sides of the model. Next, **Putting It All Together** runs one rogue agent against all of it at once.
+Reference: **[docs.docker.com/ai/sandboxes/customize/kits](https://docs.docker.com/ai/sandboxes/customize/kits/)** · community kits: **[github.com/docker/sbx-kits-contrib](https://github.com/docker/sbx-kits-contrib)**
+
+With policies enforced by the org and kits packaging compliant setups for developers, you've seen both sides of the model. Build your first kit next.
