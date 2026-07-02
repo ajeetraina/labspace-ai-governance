@@ -24,7 +24,7 @@ Instead of "clone this, export that, remember `--kit` twice," a teammate runs **
 
 **Mixin kits** (`kind: mixin`) extend an existing agent - add a tool, drop in config, grant a new service. Stack several with multiple `--kit` flags.
 
-**Agent kits** (`kind: agent`) define a full agent from scratch - image, entrypoint, network, credentials. The built-in `claude` you've been using is itself an agent kit; you can fork it and change one thing.
+**Agent kits** (`kind: sandbox` in kit-spec v2) define a full agent from scratch - image, entrypoint, network, credentials. The built-in `claude` you've been using is itself an agent kit; you can fork it and change one thing.
 
 ## What a kit can declare
 

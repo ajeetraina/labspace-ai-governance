@@ -2,7 +2,7 @@
 
 ## Stacking with --kit --kit
 
-Pass `--kit` more than once to stack kits on the same sandbox. Rules from all kits are merged: `allowedDomains` are unioned, files from all kits are injected, install commands from all kits run in order.
+Pass `--kit` more than once to stack kits on the same sandbox. Rules from all kits are merged: `caps.network.allow` entries are unioned, files from all kits are injected, install commands from all kits run in order.
 
 ```bash
 # two local kits

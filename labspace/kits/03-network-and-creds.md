@@ -4,15 +4,16 @@ The docker-review kit needed no network access. Most real kits do - they need to
 
 ## How network control works
 
-Every sandbox has an egress proxy. All outbound traffic from the sandbox goes through it. By default, a kit's `allowedDomains` are additive - they extend whatever the base network policy allows.
+Every sandbox has an egress proxy. All outbound traffic from the sandbox goes through it. By default, a kit's `caps.network.allow` entries are additive - they extend whatever the base network policy allows.
 
 ```yaml
-network:
-  allowedDomains:
-    - pypi.org
-    - files.pythonhosted.org
-  deniedDomains:
-    - telemetry.example.com   # explicit block even if another policy permits it
+caps:
+  network:
+    allow:
+      - pypi.org
+      - files.pythonhosted.org
+    deny:
+      - telemetry.example.com   # explicit block even if another policy permits it
 ```
 
 Use `sbx policy log` to see every request the proxy handled - essential for debugging blocked domains during install.
@@ -28,26 +29,20 @@ Instead:
 4. The agent inside the sandbox never sees the raw value
 
 ```yaml
+caps:
+  network:
+    allow:
+      - api.my-service.com          # let the sandbox reach the API
 credentials:
-  sources:
-    my-service:
-      env:
-        - MY_SERVICE_API_KEY   # read from host environment
-
-network:
-  serviceDomains:
-    api.my-service.com: my-service   # link domain to credential source
-  serviceAuth:
-    my-service:
-      headerName: Authorization
-      valueFormat: "Bearer %s"       # proxy injects this header
-  allowedDomains:
-    - api.my-service.com
-
-environment:
-  proxyManaged:
-    - MY_SERVICE_API_KEY   # visible as env var inside sandbox; value substituted at request time
+  - name: my-service                # secret resolved on the host by this name
+    apiKey:                         #   (a host env var, or `sbx secret set my-service`)
+      inject:
+        - domain: api.my-service.com
+          header: Authorization
+          format: "Bearer %s"       # proxy injects this header, per request
 ```
+
+The raw value stays on the host, keyed by the credential `name`; the proxy substitutes it on outbound requests to the matching `domain`. The sandbox never holds the secret - the same isolation you proved in the Credential Isolation section.
 
 ## Try it: verify Anthropic credential injection
 
