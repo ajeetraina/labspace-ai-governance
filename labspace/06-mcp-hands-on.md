@@ -307,11 +307,54 @@ If you ran the Compose gateway (Method 1, Option A), stop it too:
 cd ~/workdemo/mcp-gateway-lab && docker compose down
 ```
 
+## Govern it - MCP access policy in Docker Hub (admin)
+
+Steps 1-6 were **developer-side**: *you* chose which servers to register. The governance side is where an **org admin** decides which servers and tools agents may call **at all** - authored once in Docker Hub, enforced at the gateway for every developer in `$$org$$`.
+
+### When you add an MCP policy
+
+Add one the moment agents in your org can reach MCP tools through the hosted gateway (`SBX_MCP_URL=https://gateway.docker.com`) and you want to constrain *which* tools they may invoke - the same trigger as network/filesystem policy. Until a policy exists, the org relies on defaults; once it exists, it is the allow-list every tool call is checked against.
+
+### Where it lives
+
+Open **[app.docker.com/accounts/$$org$$](https://app.docker.com/accounts/$$org$$)** → **AI governance** → **MCP policy** → **Create policy**. You'll author MCP access rules as a single **[Cedar](https://www.cedarpolicy.com/) policy document**, and choose a **Scope**:
+
+- **Organization** - applies to all org members.
+- **Teams** - layer stricter rules on top for specific teams.
+
+Same author-once, sync-everywhere model as the network and filesystem policies - developers can't override it.
+
+### How the rules work
+
+The model is an **allow-list over `(server, tool)` pairs**, evaluated on every tool `invoke`. This policy permits exactly one tool - `get_me` on the `github-official` server:
+
+```cedar
+permit(
+  principal,
+  action == MCP::Action::"invoke",
+  resource is MCP::Tool
+)
+when {
+  resource.server == "github-official" &&
+  resource.name == "get_me"
+};
+```
+
+Reading it:
+
+- `action == MCP::Action::"invoke"` - the rule governs *calling* a tool.
+- `resource is MCP::Tool`, with `resource.server` and `resource.name` - the exact tool being called.
+- Because MCP governance is **default-deny**, this `permit` is the *whole* allow-list: `get_me` on `github-official` is allowed, and **every other tool and every other server is blocked**. To allow more, add more `permit` clauses (or broaden the `when` condition).
+
+### How it's enforced
+
+Every MCP call routes through the gateway - the single chokepoint - so the policy is evaluated on **each invocation**, and the call is authenticated, authorized, and logged before it reaches the backend. It's the same policy engine that enforced your network and filesystem rules, so there's no separate surface and no bypass path. A developer can register any server they like with `sbx mcp add`; if the org policy doesn't `permit` its tools, the agent's calls are denied and audited (Section 10). You prove exactly this in the **Putting It All Together** capstone (Step 7).
+
 ## How this connects to Pillar 2
 
-Everything you did was on the **developer side**: registering servers from your CLI, fronted by the Docker MCP Gateway. The governance side - the org admin approving catalogs, restricting tool sets, injecting per-request secrets, auditing every call - sits in front of the same `sbx mcp` machinery and the same gateway that `SBX_MCP_URL` points at.
+Everything in Steps 1-6 was on the **developer side**: registering servers from your CLI, fronted by the Docker MCP Gateway. The governance side - the MCP access policy above, plus injecting per-request secrets and auditing every call - sits in front of the same `sbx mcp` machinery and the same gateway that `SBX_MCP_URL` points at.
 
-With **Method 1** you front your own gateway and control what's registered. With **Method 2 (`gateway.docker.com`)** your org admin controls what's *registerable*, and every tool call lands in the audit trail you'll explore in Section 10.
+With **Method 1** you front your own gateway and control what's registered. With **Method 2 (`gateway.docker.com`)** your org admin's Cedar policy controls what's *invocable*, and every tool call lands in the audit trail you'll explore in Section 10.
 
 ## Quick recap
 
